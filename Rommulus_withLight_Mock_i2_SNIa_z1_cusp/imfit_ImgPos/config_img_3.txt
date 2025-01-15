@@ -1,0 +1,7 @@
+X0	510
+Y0	526
+FUNCTION Gaussian
+PA	0	fixed
+ell	0	fixed
+I_0	0.6018957935811328
+sigma	0.8 

@@ -1,0 +1,19 @@
+# Best-fit model results for imfit 1.9.0 (OpenMP-enabled)
+# Generated on Tue Jan 14 21:26:20 2025 by the following command:
+#    /usr/local/bin/./imfit Rommulus_withLight_Mock_i2_SNIa_z1_cusp/imfit_ImgPos/mock_obs.fits -mask Rommulus_withLight_Mock_i2_SNIa_z1_cusp/imfit_ImgPos/mask_img_4.fits -noise Rommulus_withLight_Mock_i2_SNIa_z1_cusp/imfit_ImgPos/mock_obs_noisemap.fits -c Rommulus_withLight_Mock_i2_SNIa_z1_cusp/imfit_ImgPos/config_img_4.txt --save-params Rommulus_withLight_Mock_i2_SNIa_z1_cusp/imfit_ImgPos/Pos_Img_4_result.txt --save-residual Rommulus_withLight_Mock_i2_SNIa_z1_cusp/imfit_ImgPos/Pos_Img_4_res.fits
+
+# Results of fit:
+#   Algorithm: Levenberg-Marquardt: status = 1 -- SUCCESS: Convergence in fit-statistic value.
+#   Fit statistic: chi-squared (user-supplied errors)
+#   Best-fit value: 422.470239
+#   Reduced value: 5.486626
+#   AIC: 430.996555
+#   BIC: 440.048036
+
+X0		520.4960 # +/- 0.0097
+Y0		531.4829 # +/- 0.0098
+FUNCTION Gaussian
+PA		      0 # +/- 0	deg (CCW from +y axis)
+ell		      0 # +/- 0
+I_0		9.22031 # +/- 0.13903	counts/pixel
+sigma		0.800084 # +/- 0.0068659	pixels
