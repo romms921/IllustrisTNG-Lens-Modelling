@@ -1,0 +1,8 @@
+X0	522
+Y0	521
+FUNCTION Sersic
+PA	80
+ell	0
+n	0.8
+I_e	0.2 
+r_e	10 

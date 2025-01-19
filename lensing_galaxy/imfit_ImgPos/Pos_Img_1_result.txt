@@ -1,0 +1,20 @@
+# Best-fit model results for imfit 1.9.0 (OpenMP-enabled)
+# Generated on Sun Jan 19 23:43:26 2025 by the following command:
+#    /usr/local/bin/./imfit lensing_galaxy/imfit_ImgPos/mock_obs.fits -mask lensing_galaxy/imfit_ImgPos/mask_img_1.fits -noise lensing_galaxy/imfit_ImgPos/mock_obs_noisemap.fits -c lensing_galaxy/imfit_ImgPos/config_img_1.txt --save-params lensing_galaxy/imfit_ImgPos/Pos_Img_1_result.txt --save-residual lensing_galaxy/imfit_ImgPos/Pos_Img_1_res.fits
+
+# Results of fit:
+#   Algorithm: Levenberg-Marquardt: status = 1 -- SUCCESS: Convergence in fit-statistic value.
+#   Fit statistic: chi-squared (user-supplied errors)
+#   Best-fit value: 2989.657986
+#   Reduced value: 2.391726
+#   AIC: 3003.747657
+#   BIC: 3039.613368
+
+X0		521.3965 # +/- 0.0377
+Y0		520.8112 # +/- 0.0219
+FUNCTION Sersic
+PA		81.4839 # +/- 0.52299	deg (CCW from +y axis)
+ell		0.478073 # +/- 0.0067444
+n		1.61117 # +/- 0.035667
+I_e		0.0796835 # +/- 0.003033	counts/pixel
+r_e		14.6946 # +/- 0.37261	pixels
