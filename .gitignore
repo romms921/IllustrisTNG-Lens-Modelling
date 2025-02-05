@@ -1,0 +1,5 @@
+# Ignore Rommulus simulation files
+Rommulus_withLight_Mock_i2_SNIa_z1_cusp
+
+# Ignore lensing galaxy files
+lensing_galaxy
