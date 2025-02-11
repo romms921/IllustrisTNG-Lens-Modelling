@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import glafic
 
-glafic.init(0.3, 0.7, -1.0, 0.7, 'POW/POW_POS+FLUX', 0.0, 0.0, 41.56, 41.56, 0.04, 0.04, 1, verb = 0)
+glafic.init(0.3, 0.7, -1.0, 0.7, 'POW/POW_POS+FLUX', 20.0, 20.0, 21.56, 21.56, 0.01, 0.01, 1, verb = 0)
 
 glafic.set_secondary('chi2_splane 0', verb = 0)
 glafic.set_secondary('chi2_checknimg 0', verb = 0)
@@ -12,10 +12,10 @@ glafic.set_secondary('ran_seed -122000', verb = 0)
 
 glafic.startup_setnum(1, 0, 1)
 # pow index is 2.1 for POS constraint
-glafic.set_lens(1, 'pow', 0.261343256161012, 1.0, 20.78, 20.78, 4.0e-01, -4.0, 0.4, 1.8) 
+glafic.set_lens(1, 'pow', 0.261343256161012, 1.0, 20.78, 20.78, 0.12, -4.0, 0.4, 2.0) 
 glafic.set_point(1, 1.0, 20.78, 20.78)
 
-glafic.setopt_lens(1, 0, 0, 1, 1, 1, 1, 1, 0)
+glafic.setopt_lens(1, 0, 0, 1, 1, 1, 1, 1, 1)
 glafic.setopt_point(1, 0, 1, 1)
 
 # model_init needs to be done again whenever model parameters are changed
