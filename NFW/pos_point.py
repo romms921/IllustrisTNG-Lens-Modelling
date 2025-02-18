@@ -12,7 +12,7 @@ glafic.set_secondary('ran_seed -122000', verb = 0)
 glafic.set_secondary('flag_hodensity 2', verb = 0)
 
 glafic.startup_setnum(1, 0, 1)
-glafic.set_lens(1, 'anfw', 0.261343256161012, 1e+12, 20.78, 20.78, 0.1, -4.0, 25.0, 0.0)
+glafic.set_lens(1, 'anfw', 0.261343256161012, 1e+12, 20.78, 20.78, 0.1, -4.0, 87.0, 0.0)
 glafic.set_point(1, 1.0, 20.78, 20.78)
 
 glafic.setopt_lens(1, 0, 1, 1, 1, 1, 1, 1, 0)
