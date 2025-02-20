@@ -11,12 +11,12 @@ glafic.set_secondary('hvary          0', verb = 0)
 glafic.set_secondary('ran_seed -122000', verb = 0)
 
 glafic.startup_setnum(2, 0, 1)
-glafic.set_lens(1, 'sie', 0.261343256161012, 1.5e+02, 20.78, 20.78, 0.1, -4.0, 0.000000e+00, 0.0)
-glafic.set_lens(2, 'pert', 0.261343256161012, 1.0, 20.78, 20.78, 0.1, -4.0, 0.0, 4.0e-01)
+glafic.set_lens(1, 'sie', 0.261343256161012, 1.58e+02, 20.80, 20.75, 0.129, -4.435, 0.000000e+00, 0.0)
+glafic.set_lens(2, 'pert', 0.261343256161012, 1.0, 20.78, 20.78, 0.001, 10.0, 0.0, 1.0e-01)
 glafic.set_point(1, 1.0, 20.78, 20.78)
 
-glafic.setopt_lens(1, 0, 1, 1, 1, 1, 1, 0, 0)
-glafic.setopt_lens(2, 0, 0, 0, 0, 0, 1, 0, 0)
+glafic.setopt_lens(1, 0, 0, 0, 0, 0, 0, 0, 0)
+glafic.setopt_lens(2, 0, 0, 1, 1, 1, 1, 0, 1)
 glafic.setopt_point(1, 0, 1, 1)
 
 # model_init needs to be done again whenever model parameters are changed
