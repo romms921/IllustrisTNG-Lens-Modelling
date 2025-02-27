@@ -3,7 +3,7 @@ import glafic
 
 glafic.init(0.3, 0.7, -1.0, 0.7, 'EIN/EIN_POS', 20.0, 20.0, 21.56, 21.56, 0.01, 0.01, 1, verb = 0)
 
-glafic.set_secondary('chi2_splane 0', verb = 0)
+glafic.set_secondary('chi2_splane 1', verb = 0)
 glafic.set_secondary('chi2_checknimg 0', verb = 0)
 glafic.set_secondary('chi2_restart   -1', verb = 0)
 glafic.set_secondary('chi2_usemag    1', verb = 0)
