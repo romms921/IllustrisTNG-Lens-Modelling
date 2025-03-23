@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import glafic
 
-glafic.init(0.3, 0.7, -1.0, 0.7, 'POW/POW_POS', 20.0, 20.0, 21.56, 21.56, 0.001, 0.001, 1, verb = 0)
+glafic.init(0.3, 0.7, -1.0, 0.7, 'Sersic/POW/POW_POS', 20.0, 20.0, 21.56, 21.56, 0.01, 0.01, 1, verb = 0)
 
 glafic.set_secondary('chi2_splane 0', verb = 0)
 glafic.set_secondary('chi2_checknimg 0', verb = 0)
@@ -10,11 +10,15 @@ glafic.set_secondary('chi2_usemag    1', verb = 0)
 glafic.set_secondary('hvary          0', verb = 0)
 glafic.set_secondary('ran_seed -122000', verb = 0)
 
-glafic.startup_setnum(1, 0, 1)
-glafic.set_lens(1, 'pow', 0.261343256161012, 1.0, 20.81, 20.76, 0.12, -4.4, 0.49, 1.97)
-glafic.set_point(1, 1.0, 20.78, 20.78)
+glafic.startup_setnum(3, 0, 1)
+glafic.set_lens(1, 'pow', 0.261343256161012, 1.0, 2.080969e+01, 2.075952e+01, 1.191710e-01, -4.440222e+00, 4.911248e-01, 1.967241e+00)
+glafic.set_lens(2, 'sers', 0.261343256161012, 8e+10, 21.2807, 20.8498, 0.19174, 97.1557, 51.8810, 1.4424)
+glafic.set_lens(3, 'sers', 0.261343256161012, 1e+10, 21.2807, 20.8498, 0.58185, 80.9088, 5.97926, 0.5737)
+glafic.set_point(1, 1.0, 2.081260e+01, 2.077943e+01)
 
 glafic.setopt_lens(1, 0, 0, 1, 1, 1, 1, 1, 1)
+glafic.setopt_lens(2, 0, 1, 0, 0, 0, 0, 0, 0)
+glafic.setopt_lens(3, 0, 1, 0, 0, 0, 0, 0, 0)
 glafic.setopt_point(1, 0, 1, 1)
 
 # model_init needs to be done again whenever model parameters are changed
