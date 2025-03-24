@@ -11,19 +11,16 @@ glafic.set_secondary('hvary          0', verb = 0)
 glafic.set_secondary('ran_seed -122000', verb = 0)
 
 glafic.startup_setnum(1, 0, 1)
-glafic.set_lens(1, 'sie', 0.261343256161012, 1.58e+02, 20.80, 20.75, 0.12, -4.0, 0.0, 0.0)
+glafic.set_lens(1, 'sie', 0.2613, 1.580350e+02, 2.080960e+01, 2.075891e+01, 1.287589e-01, -4.437098e+00, 0.000000e+00, 0.000000e+00)
 glafic.set_point(1, 1.000, 2.081270e+01, 2.078004e+01)
 
-glafic.setopt_lens(1, 0, 1, 1, 1, 1, 1, 0, 0)
-glafic.setopt_point(1, 0, 1, 1)
+glafic.setopt_lens(1, 0, 0, 0, 0, 0, 0, 0, 0)
+glafic.setopt_point(1, 0, 0, 0)
 
 # model_init needs to be done again whenever model parameters are changed
 glafic.model_init(verb = 0)
 
 glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS).dat')
-glafic.optimize()
-glafic.findimg()
-glafic.writecrit(1.0)
-glafic.writelens(1.0)
+glafic.kapparad(1.0, 20.80, 20.80, 0, 2, 10, 1)
 
 glafic.quit()
