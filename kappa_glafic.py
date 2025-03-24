@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import glafic
 
-glafic.init(0.3, 0.7, -1.0, 0.7, 'SIE/SIE_POS', 20.0, 20.0, 21.56, 21.56, 0.01, 0.01, 1, verb = 0)
+glafic.init(0.3, 0.7, -1.0, 0.7, 'SIE/SIE_POS', 20.0, 20.0, 21.56, 21.56, 0.001, 0.001, 1, verb = 0)
 
 glafic.set_secondary('chi2_splane 0', verb = 0)
 glafic.set_secondary('chi2_checknimg 0', verb = 0)
@@ -12,7 +12,7 @@ glafic.set_secondary('ran_seed -122000', verb = 0)
 
 glafic.startup_setnum(1, 0, 1)
 glafic.set_lens(1, 'sie', 0.261343256161012, 1.58e+02, 20.80, 20.75, 0.12, -4.0, 0.0, 0.0)
-glafic.set_point(1, 1.0, 20.78, 20.78)
+glafic.set_point(1, 1.000, 2.081270e+01, 2.078004e+01)
 
 glafic.setopt_lens(1, 0, 1, 1, 1, 1, 1, 0, 0)
 glafic.setopt_point(1, 0, 1, 1)
