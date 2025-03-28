@@ -12,7 +12,7 @@ glafic.set_secondary('ran_seed -122000', verb = 0)
 
 glafic.startup_setnum(1, 0, 1)
 glafic.set_lens(1, 'sie', 0.2613, 1.580350e+02, 2.080960e+01, 2.075891e+01, 1.287589e-01, -4.437098e+00, 0.000000e+00, 0.000000e+00)
-glafic.set_point(1, 1.000, 2.081270e+01, 2.078004e+01)
+glafic.set_point(1, 1.000, 1.0000, 2.081270e+01)
 
 glafic.setopt_lens(1, 0, 0, 0, 0, 0, 0, 0, 0)
 glafic.setopt_point(1, 0, 0, 0)
@@ -21,7 +21,7 @@ glafic.setopt_point(1, 0, 0, 0)
 glafic.model_init(verb = 0)
 
 glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS).dat')
-glafic.kapparad(1.0, 2.081270e+01, 2.078004e+01, 0.03, 1.56, 1000, 1)
-glafic.kappacum(1.0, 2.081270e+01, 2.078004e+01, 0.03, 1.56, 1000, 1)
+glafic.kapparad(1.0000, 2.081270e+01, 2.078004e+01, 0.03, 1.0, 1000, 1)
+glafic.kappacum(1.0000, 2.081270e+01, 2.078004e+01, 0.03, 1.0, 1000, 1)
 
 glafic.quit()
