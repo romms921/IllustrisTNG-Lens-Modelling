@@ -21,7 +21,7 @@ glafic.setopt_point(1, 0, 0, 0)
 glafic.model_init(verb = 0)
 
 glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS).dat')
-glafic.kapparad(1.0000, 2.081270e+01, 2.078004e+01, 0.03, 1.0, 1000, 1)
-glafic.kappacum(1.0000, 2.081270e+01, 2.078004e+01, 0.03, 1.0, 1000, 1)
+glafic.kapparad(1.0000, 2.081270e+01, 2.078004e+01, 0.03, 0.8, 1000, 1)
+glafic.kappacum(1.0000, 2.081270e+01, 2.078004e+01, 0.03, 0.8, 1000, 1)
 
 glafic.quit()
