@@ -1,0 +1,22 @@
+
+    ------------------------------------------
+    optimize ndim=10
+    run 1: 100 lens models calculated
+    chi^2 = 150.5  [N_data(extend): 0]
+     point no 1 : 150.5 ...
+    omega = 0.3000  lambda = 0.7000  weos = -1.0000  hubble = 0.7000
+    lens   sie     0.5000  151.2  0.001 -0.002  0.19  29.5   0.0   0.0  # Early SIE
+    lens   pert    0.5000  1.0000 0.101 -0.101  0.048 44.0   0.0   0.019 # Early Shear
+    point  1.0000  ...
+    ------------------------------------------
+    ------------------------------------------
+    optimize ndim=10
+    run 2: 50 lens models calculated
+    chi^2 = 25.8  [N_data(extend): 0]
+     point no 1 : 25.8 ...
+    omega = 0.3000  lambda = 0.7000  weos = -1.0000  hubble = 0.7000
+    lens   sie     0.5000  157.89  0.0208  0.0207  0.100  27.3   0.0   0.0   # Final SIE
+    lens   pert    0.5000  1.0000  0.0209 -0.0206  0.035  143.8  0.0   0.020  # Final Shear
+    point  1.0000  ...
+    ------------------------------------------
+    

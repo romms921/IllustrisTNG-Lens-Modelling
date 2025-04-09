@@ -1,0 +1,21 @@
+
+    # Example glafic input
+    prefix test_run
+    verbosity 1
+
+    # Lens Model
+    glafic.set_lens(1, 'SIE', 0.5, 0.0, 0.0, 0.2, 30.0, 0.0, 0.0)
+    glafic.setopt_lens(1, 'sie', 1, 1, 1, 1, 1, 0, 0) 
+
+    glafic.set_lens(2, 'NFW', 12.5, 0.1, -0.1, 0.1, 120.0, 10.0, 0.0) # M = 10^12.5
+    glafic.setopt_lens(2, 'nfw', 1, 1, 1, 0, 0, 1, 0)
+
+    glafic.set_lens(3, 'PERT', 0.5, 0.0, 0.0, 0.05, 45.0, 0.0, 0.02) # Shear
+    glafic.setopt_lens(3, 'pert', 0, 0, 0, 1, 1, 0, 1)
+
+    # Source Model
+    # ...
+    
+    writefits 1
+    quit
+    

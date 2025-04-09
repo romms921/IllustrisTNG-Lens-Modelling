@@ -1,0 +1,17 @@
+
+    # glafic output example
+    read input model.
+    start optimization.
+    iter    1 chi^2= 150.5 N=100
+    lens    1 sie   0.501  0.002 -0.001  0.21  31.5   0.0   0.0  # Optimized SIE
+    lens    2 anfw  12.48  0.105 -0.095  0.1   120.0  9.8   0.0  # Optimized NFW
+    lens    3 pert  0.5    0.0   0.0     0.055 46.1   0.0   0.021 # Optimized Shear
+    iter    50 chi^2= 25.8 N=100 dof=90 chi^2/dof=0.287
+    best-fit lens model:
+    lens    1 sie   0.501  0.002 -0.001  0.21  31.5   0.0   0.0  # Final SIE
+    lens    2 anfw  12.48  0.105 -0.095  0.1   120.0  9.8   0.0  # Final NFW
+    lens    3 pert  0.5    0.0   0.0     0.055 46.1   0.0   0.021 # Final Shear
+    final chi^2 = 25.789 (N=100, dof=90)  # Final chi line
+    write fits files...
+    end.
+    
