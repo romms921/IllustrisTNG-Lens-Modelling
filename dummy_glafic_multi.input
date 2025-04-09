@@ -1,0 +1,14 @@
+
+    # Example glafic input
+    prefix test_run
+    verbosity 1
+
+    glafic.set_lens(1, 'SIE', 0.5, 150.0, 0.0, 0.0, 0.2, 30.0, 0.0, 0.0) # Added z=0.5
+    glafic.setopt_lens(1, 'sie', 0, 1, 1, 1, 1, 1, 0, 0)
+
+    glafic.set_lens(2, 'PERT', 0.5, 1.0, 0.1, -0.1, 0.05, 45.0, 0.0, 0.02) # Shear
+    glafic.setopt_lens(2, 'pert', 0, 0, 1, 1, 1, 1, 0, 1)
+
+    writefits 1
+    quit
+    
