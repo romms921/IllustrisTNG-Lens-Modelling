@@ -3,7 +3,7 @@ import glafic
 
 glafic.init(0.3, 0.7, -1.0, 0.7, 'NFW+MPOLE/NFW_POS_MPOLE', 20.0, 20.0, 21.56, 21.56, 0.01, 0.01, 1, verb = 0)
 
-glafic.set_secondary('chi2_splane 0', verb = 0)
+glafic.set_secondary('chi2_splane 1', verb = 0)
 glafic.set_secondary('chi2_checknimg 0', verb = 0)
 glafic.set_secondary('chi2_restart   -1', verb = 0)
 glafic.set_secondary('chi2_usemag    1', verb = 0)
@@ -12,7 +12,7 @@ glafic.set_secondary('ran_seed -122000', verb = 0)
 
 glafic.startup_setnum(2, 0, 1)
 glafic.set_lens(1, 'anfw', 0.261343256161012, 2.0e+11, 20.80, 20.75, 0.14, -4.4, 107.0, 0.0)
-glafic.set_lens(2, 'mpole', 0.261343256161012, 1.0, 20.80, 20.75, 0.02, 120.0, 4.5, 0.0)
+glafic.set_lens(2, 'mpole', 0.261343256161012, 1.0, 20.80, 20.75, 0.05, 0.0, 4.4, 0.0)
 glafic.set_point(1, 1.0, 20.78, 20.78)
 
 glafic.setopt_lens(1, 0, 1, 1, 1, 1, 1, 1, 0)
