@@ -17,7 +17,7 @@ glafic.set_point(1, 1.000, 20.82216, 20.74415)
 
 glafic.setopt_lens(1, 0, 0, 0, 0, 0, 0, 0, 0)
 glafic.setopt_lens(2, 0, 0, 0, 0, 0, 0, 0, 0)
-glafic.setopt_point(1, 0, 1, 1)
+glafic.setopt_point(1, 0, 0, 0)
 
 # model_init needs to be done again whenever model parameters are changed
 glafic.model_init(verb = 0)
