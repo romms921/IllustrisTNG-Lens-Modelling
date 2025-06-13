@@ -21,7 +21,6 @@ glafic.setopt_point(1, 0, 0, 0)
 glafic.model_init(verb = 0)
 
 glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS).dat')
-glafic.findimg()
 glafic.writelens(1.0)
 
 glafic.quit()
