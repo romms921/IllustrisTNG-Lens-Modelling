@@ -1,5 +1,5 @@
 ------------------------------------------
-optimize ndim=2
+optimize ndim=0
 run 1: 0 lens models calculated
 chi^2 = 1.000000e+30  [N_data(extend): 0]
  extend     : 0.000000e+00 0.000000e+00 0.000000e+00
