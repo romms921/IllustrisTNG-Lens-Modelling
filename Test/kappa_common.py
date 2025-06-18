@@ -11,9 +11,9 @@ glafic.set_secondary('hvary          0', verb = 0)
 glafic.set_secondary('ran_seed -122000', verb = 0)
 
 glafic.startup_setnum(2, 0, 1)
-glafic.set_lens(1, "sie", 0.261343256161012, 130.0, 20.78, 20.78, 0.107, 23.38, 0.0, 0.0)
-glafic.set_lens(2, "pert", 0.261343256161012, 1.0, 20.88, 20.78, 0.1, 90.0, 0.0, 0.1)
-glafic.set_point(1, 1.000, 20.78, 20.78)
+glafic.set_lens(1, "sie", 0.261343256161012, 158.04, 20.80964, 20.75886, 0.1289154, -4.431012, 0.0, 0.0)
+glafic.set_lens(2, "pert", 0.261343256161012, 1.0, 20.78, 20.78, 0.2, 90.0, 0.0, 0.1)
+glafic.set_point(1, 1.000, 20.81274, 20.78002)
 
 glafic.setopt_lens(1, 0, 0, 0, 0, 0, 0, 0, 0)
 glafic.setopt_lens(2, 0, 0, 0, 0, 0, 0, 0, 0)
