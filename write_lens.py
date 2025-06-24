@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import glafic
 
-glafic.init(0.3, 0.7, -1.0, 0.7, 'Sersic/NFW+SHEAR/NFW_POS_SHEAR', -0.78, -0.78, 0.78, 0.78, 0.012, 0.012, 1, verb = 0)
+glafic.init(0.3, 0.7, -1.0, 0.7, 'Write Lens/NFW_POS_SHEAR', -0.78, -0.78, 0.78, 0.78, 0.012, 0.012, 1, verb = 0)
 
 glafic.set_secondary('chi2_splane 1', verb = 0)
 glafic.set_secondary('chi2_checknimg 0', verb = 0)
