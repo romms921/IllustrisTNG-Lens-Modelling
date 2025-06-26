@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import glafic
 
-glafic.init(0.3, 0.7, -1.0, 0.7, 'Write Lens/POW_POS+FLUX_SHEAR', -0.78, -0.78, 0.78, 0.78, 0.0012, 0.0012, 1, verb = 0)
+glafic.init(0.3, 0.7, -1.0, 0.7, 'Write Lens/POW_POS+FLUX_SHEAR', -0.8176899999999978, -0.8251799999999985, 0.7423100000000022, 0.7348200000000016, 0.0012, 0.0012, 1, verb = 0)
 
 glafic.set_secondary('chi2_splane 1', verb = 0)
 glafic.set_secondary('chi2_checknimg 0', verb = 0)
