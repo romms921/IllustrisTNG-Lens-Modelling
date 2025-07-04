@@ -6,7 +6,7 @@ n = [1, 2, 3, 4, 5]
 
 for i in range(len(m)):
     for j in range(len(n)):
-        glafic.init(0.3, 0.7, -1.0, 0.7, f'MPOLE/mpole_{m[i]}_{n[j]}', 20.0, 20.0, 21.56, 21.56, 0.01, 0.01, 1, verb = 0)
+        glafic.init(0.3, 0.7, -1.0, 0.7, f'MPOLE/mpole_{m[i]}_{n[j]}', 20.0, 20.0, 21.56, 21.56, 0.001, 0.001, 1, verb = 0)
 
         glafic.set_secondary('chi2_splane 1', verb = 0)
         glafic.set_secondary('chi2_checknimg 0', verb = 0)
