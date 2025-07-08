@@ -27,5 +27,6 @@ for i in range(len(m)):
 
         glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS).dat')
         glafic.writelens(1.0)
+        glafic.writecrit(1.0)
 
         glafic.quit()
