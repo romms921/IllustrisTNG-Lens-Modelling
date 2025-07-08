@@ -15,18 +15,19 @@ for i in range(len(m)):
         glafic.set_secondary('hvary          0', verb = 0)
         glafic.set_secondary('ran_seed -122000', verb = 0)
 
-        glafic.startup_setnum(1, 0, 1)
+        glafic.startup_setnum(2, 0, 1)
         glafic.set_lens(1, 'mpole', 0.261343256161012, 1.0, 20.78, 20.78, 0.001, 0.0, m[i], n[j])
+        glafic.set_lens(2, 'sie', 0.261343256161012, 130.0, 20.78, 20.78, 0.5, 0.0, 0.0, 0.0)
         glafic.set_point(1, 1.0, 20.78, 20.78)
 
         glafic.setopt_lens(1, 0, 0, 0, 0, 0, 0, 0, 0)
+        glafic.setopt_lens(2, 0, 0, 0, 0, 0, 0, 0, 0)
         glafic.setopt_point(1, 0, 0, 0)
 
         # model_init needs to be done again whenever model parameters are changed
         glafic.model_init(verb = 0)
 
         glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS).dat')
-        glafic.writelens(1.0)
         glafic.writecrit(1.0)
 
         glafic.quit()
