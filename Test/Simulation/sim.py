@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 import glafic
 from tqdm import tqdm
+import numpy as np
 
-m = [0.1, 0.2, 0.3, 0.4, 0.5]
-n = [0, 50, 100, 150, 200]
-o = [0.1, 0.2, 0.3, 0.4, 0.5]
+m = [round(x, 1) for x in np.linspace(0.1, 0.5, 10)]
+n = [0, 50, 100, 150, 200, 250, 300, 350]
+o = [round(x, 2) for x in np.linspace(-0.5, 0.5, 13)]
 
 
 # Calculate total iterations for the progress bar
@@ -40,7 +41,7 @@ with tqdm(total=total_iterations, desc="Processing") as pbar:
                 glafic.model_init(verb = 0)
 
                 glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS).dat')
-                glafic.parprior('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/Test/Simulation/priorfile.dat')
+                # glafic.parprior('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/Test/Simulation/priorfile.dat')
                 glafic.optimize()
                 glafic.findimg()
                 glafic.writecrit(1.0)
