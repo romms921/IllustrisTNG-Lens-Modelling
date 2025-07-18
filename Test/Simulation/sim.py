@@ -3,9 +3,9 @@ import glafic
 from tqdm import tqdm
 import numpy as np
 
-m = [round(x, 1) for x in np.linspace(0.1, 0.5, 10)]
-n = [0, 50, 100, 150, 200, 250, 300, 350]
-o = [round(x, 2) for x in np.linspace(-0.5, 0.5, 13)]
+m = [round(x, 1) for x in np.linspace(0.01, 0.5, 100)]
+n = [round(x, 1) for x in np.linspace(0, 360, 10)]
+o = [round(x, 2) for x in np.linspace(-0.5, 0.5, 1000)]
 
 
 # Calculate total iterations for the progress bar
@@ -20,9 +20,9 @@ with tqdm(total=total_iterations, desc="Processing") as pbar:
                 # Current Iteration Number 
                 print(f"Processing Iteration = {i * len(n) * len(o) + j * len(o) + k + 1} of {total_iterations}")
 
-                glafic.init(0.3, 0.7, -1.0, 0.7, f'Test/Simulation/SIE_POS_SHEAR_{m[i]}_{n[j]}_{o[k]}', 20.0, 20.0, 21.56, 21.56, 0.01, 0.01, 1, verb = 0)
+                glafic.init(0.3, 0.7, -1.0, 0.7, f'Test/Simulation/Sim 3/SIE_POS_SHEAR_{m[i]}_{n[j]}_{o[k]}', 20.0, 20.0, 21.56, 21.56, 0.01, 0.01, 1, verb = 0)
 
-                glafic.set_secondary('chi2_splane 0', verb = 0)
+                glafic.set_secondary('chi2_splane 1', verb = 0)
                 glafic.set_secondary('chi2_checknimg 1', verb = 0)
                 glafic.set_secondary('chi2_restart   -1', verb = 0)
                 glafic.set_secondary('chi2_usemag    1', verb = 0)
