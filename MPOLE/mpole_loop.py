@@ -17,7 +17,7 @@ for i in range(len(m)):
         glafic.set_secondary('ran_seed -122000', verb = 0)
 
         glafic.startup_setnum(2, 0, 1)
-        glafic.set_lens(1, 'sie', 0.261343256161012, 1.58e+02, 20.80, 20.75, 0.12, -4.0, 0.0, 0.0)
+        glafic.set_lens(1, 'sie', 0.261343256161012, 1.58e+02, 20.8512217, 20.8340052, 0.12, -4.0, 0.0, 0.0)
         glafic.set_lens(2, 'mpole', 0.261343256161012, 1.0, 20.80, 20.75, 0.01, -90.0, m[i], n[j])
         glafic.set_point(1, 1.0, 20.78, 20.78)
 
@@ -29,6 +29,7 @@ for i in range(len(m)):
         glafic.model_init(verb = 0)
 
         glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS).dat')
+        glafic.parprior('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/MPOLE/priorfile.dat')
         glafic.optimize()
         glafic.findimg()
         glafic.writecrit(1.0)
