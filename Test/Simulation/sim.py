@@ -2,10 +2,12 @@
 import glafic
 from tqdm import tqdm
 import numpy as np
+import requests
+import os
 
-m = [round(x, 1) for x in np.linspace(0.01, 0.5, 100)]
+m = [round(x, 4) for x in np.linspace(0.01, 0.5, 100)]
 n = [round(x, 1) for x in np.linspace(0, 360, 10)]
-o = [round(x, 2) for x in np.linspace(-0.5, 0.5, 1000)]
+o = [round(x, 4) for x in np.linspace(-0.5, 0.5, 100)]
 
 
 # Calculate total iterations for the progress bar
@@ -20,7 +22,7 @@ with tqdm(total=total_iterations, desc="Processing") as pbar:
                 # Current Iteration Number 
                 print(f"Processing Iteration = {i * len(n) * len(o) + j * len(o) + k + 1} of {total_iterations}")
 
-                glafic.init(0.3, 0.7, -1.0, 0.7, f'Test/Simulation/Sim 3/SIE_POS_SHEAR_{m[i]}_{n[j]}_{o[k]}', 20.0, 20.0, 21.56, 21.56, 0.01, 0.01, 1, verb = 0)
+                glafic.init(0.3, 0.7, -1.0, 0.7, f'/Volumes/LinuxTechTi/Astro/Sim 3/SIE_POS_SHEAR_{m[i]}_{n[j]}_{o[k]}', 20.0, 20.0, 21.56, 21.56, 0.01, 0.01, 1, verb = 0)
 
                 glafic.set_secondary('chi2_splane 1', verb = 0)
                 glafic.set_secondary('chi2_checknimg 1', verb = 0)
@@ -35,7 +37,7 @@ with tqdm(total=total_iterations, desc="Processing") as pbar:
                 glafic.set_point(1, 1.0, 20.78, 20.78)
 
                 glafic.setopt_lens(1, 0, 1, 1, 1, 1, 1, 0, 0)
-                glafic.setopt_lens(2, 0, 0, 0, 0, 1, 1, 0, 1)
+                glafic.setopt_lens(2, 0, 0, 0, 0, 0, 0, 0, 0)
                 glafic.setopt_point(1, 0, 1, 1)
 
                 glafic.model_init(verb = 0)
@@ -51,3 +53,31 @@ with tqdm(total=total_iterations, desc="Processing") as pbar:
                 
                 # Update progress bar
                 pbar.update(1)
+
+                current_iteration = i * len(n) * len(o) + j * len(o) + k + 1
+                precentage_complete = (current_iteration / total_iterations) * 100
+                avg_time_per_iteration = pbar.format_dict['elapsed'] / current_iteration if current_iteration > 0 else 0
+                approx_time_remaining = (total_iterations - current_iteration) * avg_time_per_iteration
+
+                # Store in a dictionary
+                progress_info = {
+                    'current_iteration': current_iteration,
+                    'total_iterations': total_iterations,
+                    'percentage_complete': precentage_complete,
+                    'avg_time_per_iteration': avg_time_per_iteration,
+                    'approx_time_remaining': approx_time_remaining
+                }
+
+                # Save to simulation log file
+                with open('/Users/ainsleylewis/Documents/Astronomy/Discord Bot/simulation_log.txt', 'w') as log_file:
+                    log_file.write(f"Iteration {current_iteration}/{total_iterations}: {progress_info}\n")
+
+
+                # if current_iteration % 1000 == 0:
+                #     # Get directory size in GB
+                #     dir_path = '/Volumes/LinuxTechTi/Astro/Sim 3'
+                #     dir_size = sum(os.path.getsize(os.path.join(dirpath,filename)) for dirpath, _, filenames in os.walk(dir_path) for filename in filenames)
+                #     dir_size_gb = dir_size / (1024 * 1024 * 1024)  # Convert bytes to GB
+                    
+                #     requests.post("https://ntfy.sh/romms_lensingsim",
+                #         data=f"Completed iteration {current_iteration}. Directory size: {dir_size_gb:.2f} GB".encode(encoding='utf-8'))
