@@ -6,11 +6,12 @@ import psutil
 import shutil
 import os
 import time
+import requests
 
 # ==== Config ====
-m = [round(x, 4) for x in np.linspace(0.01, 0.5, 100)]
+m = [round(x, 4) for x in np.linspace(0.01, 0.5, 50)]
 n = [round(x, 1) for x in np.linspace(0, 360, 10)]
-o = [round(x, 4) for x in np.linspace(-0.5, 0.5, 100)]
+o = [round(x, 4) for x in np.linspace(-0.5, 0.5, 50)]
 
 ram_threshold_percent = 90
 disk_check_interval = 10
@@ -41,6 +42,18 @@ def get_disk_threat_assessment(directory, avg_model_size, models_remaining):
         return "MEDIUM"
     else:
         return "LOW"
+
+def upload_to_replit(log_path: str, replit_url: str = "https://fd07c8f5-4e98-4ab1-92c3-e95ee5cf451d-00-h61aopcz3tjm.janeway.replit.dev/upload"):
+    try:
+        with open(log_path, 'rb') as f:
+            files = {'file': f}
+            response = requests.post(replit_url, files=files)
+            if response.status_code == 200:
+                print("✅ Log file uploaded to Replit successfully.")
+            else:
+                print(f"⚠️ Failed to upload log file: {response.text}")
+    except Exception as e:
+        print(f"❌ Error during upload: {e}")
 
 # ==== Main ====
 total_iterations = len(m) * len(n) * len(o)
@@ -150,5 +163,8 @@ with tqdm(total=total_iterations, desc="Processing") as pbar:
 
                 with open(log_file_path, 'w') as log_file:
                     log_file.write(f"Iteration {current_iteration}/{total_iterations}: {progress_info}\n")
+
+                if current_iteration % 100 == 0:
+                    upload_to_replit("/Users/ainsleylewis/Documents/Astronomy/Discord Bot/simulation_log.txt")
 
                 pbar.update(1)
