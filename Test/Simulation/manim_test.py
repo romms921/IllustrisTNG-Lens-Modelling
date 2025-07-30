@@ -65,7 +65,7 @@ class SurfaceMorphAnimation(ThreeDScene):
             lambda u, v: axes.c2p(u, v, 0),
             u_range=[x_min, x_max],
             v_range=[y_min, y_max],
-            resolution=(50, 50),
+            resolution=(10, 10),
             fill_opacity=0.7,
         )
 
@@ -74,7 +74,7 @@ class SurfaceMorphAnimation(ThreeDScene):
             lambda u, v: axes.c2p(u, v, griddata((x,y), z, (u,v), method='cubic', fill_value=0)),
             u_range=[x_min, x_max],
             v_range=[y_min, y_max],
-            resolution=(50, 50),
+            resolution=(10, 10),
             fill_opacity=0.7,
         )
 
