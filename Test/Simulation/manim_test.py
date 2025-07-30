@@ -10,22 +10,10 @@ plt.rcParams['axes.edgecolor'] = 'w'
 plt.rcParams['figure.facecolor'] = 'k'
 plt.rcParams['axes.facecolor'] = 'k'
 from scipy.interpolate import griddata
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from matplotlib.colors import LogNorm
-from matplotlib.patches import FancyArrowPatch
-import matplotlib.colors as colors
-from astropy.visualization import SqrtStretch, LinearStretch, LogStretch
-from astropy.visualization.mpl_normalize import ImageNormalize
 import pandas as pd
 import re
 from astropy.io import fits
 import os
-from scipy.ndimage import map_coordinates
-from scipy.stats import binned_statistic
-from scipy.spatial.distance import cdist
-from scipy.optimize import linear_sum_assignment
-from pathlib import Path
-from scipy.stats import gaussian_kde
 import seaborn as sns
 import plotly.graph_objects as go
 
@@ -356,20 +344,21 @@ df['pos_rms'] = df['pos_rms'].fillna(1)
 df['mag_rms'] = df['mag_rms'].fillna(6000)
 
 
-import sys
-sys.path.append('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/.venv/lib/python3.11/site-packages')
 from manim import *
 from manim import config
 config.ffmpeg_executable = "/opt/homebrew/bin/ffmpeg"  # Adjust path as needed
 
 
+from manim import *
+import numpy as np
+from scipy.interpolate import griddata
+
 class SurfaceMorphAnimation(ThreeDScene):
     def construct(self):
-        # Set up the camera
-        self.set_camera_orientation(phi=75*DEGREES, theta=-30*DEGREES)
-        self.camera.set_zoom(0.6)
+        # Set the camera orientation
+        self.set_camera_orientation(phi=75 * DEGREES, theta=-30 * DEGREES)
         
-        # Get your data
+        # Create initial flat surface
         x = df['t_shear_str'].values
         y = df['t_shear_kappa'].values
         z = df['pos_rms'].values
@@ -381,49 +370,87 @@ class SurfaceMorphAnimation(ThreeDScene):
         z = z[mask]
         
         # Create interpolation grid
-        xi = np.linspace(x.min(), x.max(), 50)
-        yi = np.linspace(y.min(), y.max(), 50)
+        xi = np.linspace(x.min(), x.max(), 100)
+        yi = np.linspace(y.min(), y.max(), 100)
         xi, yi = np.meshgrid(xi, yi)
+        
+        # Interpolate z values
         zi = griddata((x, y), z, (xi, yi), method='cubic')
         
-        # Create the initial flat surface (z=0)
-        initial_surface = Surface(
+        # Create the surface
+        surface = Surface(
             lambda u, v: np.array([
                 u,
                 v,
-                0
+                0  # Start with flat surface
             ]),
             u_range=[x.min(), x.max()],
             v_range=[y.min(), y.max()],
-            resolution=(50, 50)
+            resolution=(50, 50),
         )
         
-        # Create the target surface
-        final_surface = Surface(
-            lambda u, v: np.array([
-                u,
-                v,
-                float(griddata((x, y), z, ([u], [v]), method='cubic')[0])
-            ]),
-            u_range=[x.min(), x.max()],
-            v_range=[y.min(), y.max()],
-            resolution=(50, 50)
+        # Set surface appearance
+        surface.set_fill_by_value(
+            axes=None,
+            colors=[(RED, 0.5), (YELLOW, 0.7), (BLUE, 0.9)],
+            axis=2
         )
         
-        # Set surface colors
-        initial_surface.set_fill_by_value(axes=None, colors=[(RED, 0.5), (YELLOW, 0.75), (BLUE, 1)])
-        final_surface.set_fill_by_value(axes=None, colors=[(RED, 0.5), (YELLOW, 0.75), (BLUE, 1)])
+        # Add initial surface
+        self.add(surface)
+        self.wait()
         
-        # Add surfaces to scene
-        self.add(initial_surface)
+        # Create animation to morph surface
+        def update_surface(surf, alpha):
+            new_surf = Surface(
+                lambda u, v: np.array([
+                    u,
+                    v,
+                    float(griddata((x, y), z, (u, v), method='cubic')) * alpha
+                ]),
+                u_range=[x.min(), x.max()],
+                v_range=[y.min(), y.max()],
+                resolution=(50, 50),
+            )
+            surf.become(new_surf)
+            surf.set_fill_by_value(
+                axes=None,
+                colors=[(RED, 0.5), (YELLOW, 0.7), (BLUE, 0.9)],
+                axis=2
+            )
         
-        # Animate the transformation
+        # Create and play the animation
         self.play(
-            Transform(initial_surface, final_surface),
-            run_time=3,
-            rate_func=smooth
+            UpdateFromAlphaFunc(surface, update_surface),
+            run_time=3
         )
         
-        # Rotate the camera
+        # Add axes and labels
+        axes = ThreeDAxes(
+            x_range=[x.min(), x.max()],
+            y_range=[y.min(), y.max()],
+            z_range=[0, z.max()],
+        )
+        
+        labels = VGroup(
+            Text("Shear Strength").next_to(axes.x_axis, RIGHT),
+            Text("Shear Kappa").next_to(axes.y_axis, UP),
+            Text("Position RMS").next_to(axes.z_axis, OUT)
+        )
+        
+        self.play(
+            Create(axes),
+            Write(labels)
+        )
+        
+        # Rotate the view
         self.begin_ambient_camera_rotation(rate=0.2)
         self.wait(5)
+
+        # Render and save the animation
+        if __name__ == '__main__':
+            config.pixel_height = 720
+            config.pixel_width = 1280
+            config.output_file = "surface_animation.gif"
+            scene = SurfaceMorphAnimation()
+            scene.render()
