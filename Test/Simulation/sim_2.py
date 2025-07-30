@@ -11,13 +11,13 @@ import requests
 # ==== Config ====
 m = [round(x, 4) for x in np.linspace(0.01, 0.5, 50)]
 n = [round(x, 1) for x in np.linspace(0, 360, 10)]
-o = [round(x, 4) for x in np.linspace(-0.5, 0.5, 10)]
+o = [round(x, 4) for x in np.linspace(-0.5, 0.5, 50)]
 
 ram_threshold_percent = 90
 disk_check_interval = 10
 critical_disk_usage_percent = 90
 
-model_output_dir = '/Volumes/Astro/Sim 4'
+model_output_dir = '/Volumes/Astro/Sim 5'
 log_file_path = '/Users/ainsleylewis/Documents/Astronomy/Discord Bot/simulation_log.txt'
 
 # ==== Helpers ====
@@ -96,7 +96,7 @@ with tqdm(total=total_iterations, desc="Processing") as pbar:
                 glafic.set_point(1, 1.0, 20.78, 20.78)
 
                 glafic.setopt_lens(1, 0, 1, 1, 1, 1, 1, 0, 0)
-                glafic.setopt_lens(2, 0, 0, 0, 0, 1, 1, 0, 1)
+                glafic.setopt_lens(2, 0, 0, 0, 0, 0, 0, 0, 0)
                 glafic.setopt_point(1, 0, 1, 1)
 
                 glafic.model_init(verb=0)
