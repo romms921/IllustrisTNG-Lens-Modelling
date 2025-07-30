@@ -1,0 +1,6 @@
+# This file is used internally by FFMPEG.
+file 'file:/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/media/videos/manim_test/1080p60/partial_movie_files/SurfaceMorphAnimation/1249882417_2840115676_362841716.mp4'
+file 'file:/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/media/videos/manim_test/1080p60/partial_movie_files/SurfaceMorphAnimation/2360459685_1539563298_842560206.mp4'
+file 'file:/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/media/videos/manim_test/1080p60/partial_movie_files/SurfaceMorphAnimation/2360459685_3515533520_2021773687.mp4'
+file 'file:/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/media/videos/manim_test/1080p60/partial_movie_files/SurfaceMorphAnimation/2360459685_1550127860_1395014351.mp4'
+file 'file:/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/media/videos/manim_test/1080p60/partial_movie_files/SurfaceMorphAnimation/3996077627_495169573_2872390963.mp4'
