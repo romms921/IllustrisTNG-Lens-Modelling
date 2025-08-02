@@ -28,7 +28,7 @@ df = pd.read_csv('Test/Simulation/sim_3.csv')
 
 class SurfaceMorphAnimation(ThreeDScene):
     def construct(self):
-        self.set_camera_orientation(phi=75 * DEGREES, theta=-30 * DEGREES)
+        self.set_camera_orientation(phi=45 * DEGREES, theta=-30 * DEGREES, zoom=0.6)
 
         # --- DATA PREPARATION (Do this only ONCE) ---
         x = df['t_shear_str'].values
@@ -47,7 +47,7 @@ class SurfaceMorphAnimation(ThreeDScene):
             x_range=[x_min, x_max],
             y_range=[y_min, y_max],
             z_range=[0, z.max() if z.max() > 0 else 1],
-            x_length=7, y_length=7, z_length=4
+            x_length=7, y_length=7, z_length=3
         )
         self.add(axes)
 
@@ -66,7 +66,7 @@ class SurfaceMorphAnimation(ThreeDScene):
             u_range=[x_min, x_max],
             v_range=[y_min, y_max],
             resolution=(10, 10),
-            fill_opacity=0.7,
+            fill_opacity=1,
         )
 
         # 2. The Final Surface (morphed)
@@ -75,13 +75,13 @@ class SurfaceMorphAnimation(ThreeDScene):
             u_range=[x_min, x_max],
             v_range=[y_min, y_max],
             resolution=(10, 10),
-            fill_opacity=0.7,
+            fill_opacity=1,
         )
 
         # Color the final surface based on its Z-values
         end_surface.set_fill_by_value(
             axes=axes,
-            colors=[(RED, 0), (YELLOW, z.max()/2), (BLUE, z.max())],
+            colors=[(PURPLE_A, 0), (RED_B, z.max()/3), (GOLD_A, 2*z.max()/3), (WHITE, z.max())],
             axis=2
         )
 
@@ -94,7 +94,7 @@ class SurfaceMorphAnimation(ThreeDScene):
         # It will also interpolate the colors smoothly.
         self.play(
             Transform(start_surface, end_surface),
-            run_time=3
+            run_time=5
         )
         self.wait()
         
@@ -107,6 +107,6 @@ class SurfaceMorphAnimation(ThreeDScene):
         self.play(Write(labels))
 
         # Rotate the view
-        self.begin_ambient_camera_rotation(rate=0.2)
-        self.wait(5)
+        self.begin_ambient_camera_rotation(rate=0.4)
+        self.wait(20)
         self.stop_ambient_camera_rotation()
