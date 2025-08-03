@@ -8,6 +8,7 @@ import os
 import time
 import requests
 import json  # ### NEW ### - For handling the restart file
+import pandas as pd
 
 # ==== Config ====
 m = [round(x, 4) for x in np.linspace(0.01, 0.5, 100)]
@@ -21,8 +22,7 @@ critical_disk_usage_percent = 90
 model_output_dir = '/Volumes/T7 Shield/Sim 6'
 log_file_path = '/Users/ainsleylewis/Documents/Astronomy/Discord Bot/simulation_log.txt'
 
-### NEW/MODIFIED ###
-# Path for the restart state file. It will be created in the same directory as the log file.
+
 restart_file_path = os.path.join(os.path.dirname(log_file_path), 'simulation_restart_state.json')
 
 # ==== Helpers ====
@@ -91,6 +91,275 @@ def load_restart_state(path):
     except (json.JSONDecodeError, KeyError) as e:
         print(f"⚠️ Could not read restart file: {e}. Starting a fresh simulation.")
         return 0, 0, 0
+    
+# Define the lens corresponding parameters (order preserved)
+# POW
+pow_params = ['$z_{s,fid}$', 'x', 'y', 'e', '$θ_{e}$', '$r_{Ein}$', '$\gamma$ (PWI)']
+
+# SIE
+sie_params = ['$\sigma$', 'x', 'y', 'e', '$θ_{e}$', '$r_{core}$', 'NaN']
+
+# NFW
+nfw_params = ['M', 'x', 'y', 'e', '$θ_{e}$', 'c or $r_{s}$', 'NaN']
+
+# EIN
+ein_params = ['M', 'x', 'y', 'e', '$θ_{e}$', 'c or $r_{s}$', r'$\alpha_{e}$']
+
+# SHEAR 
+shear_params = ['$z_{s,fid}$', 'x', 'y', '$\gamma$', '$θ_{\gamma}$', 'NaN', '$\kappa$']
+
+# Sersic
+sersic_params = ['$M_{tot}$', 'x', 'y', 'e', '$θ_{e}$', '$r_{e}$', '$n$']
+
+# Cored SIE
+cored_sie_params = ['M', 'x', 'y', 'e', '$θ_{e}$', '$r_{core}$', 'NaN']
+
+# Multipoles
+mpole_params = ['$z_{s,fid}$', 'x', 'y', '$\epsilon$', '$θ_{m}$', 'm', 'n']
+
+model_list = ['POW', 'SIE', 'ANFW', 'EIN', 'PERT', 'SERS', 'MPOLE']
+model_params = {
+    'POW': pow_params,
+    'SIE': sie_params,
+    'ANFW': nfw_params,
+    'EIN': ein_params,
+    'PERT': shear_params,
+    'SERS': sersic_params,
+    'MPOLE' : mpole_params
+}
+
+# Define function to make both tables
+def rms_extract(model_ver, model_path, constraint):
+    global pos_rms, mag_rms, chi2_value
+    # Load the data
+    with open(model_path + '/' + model_ver + '_optresult' + '.dat', 'r') as file:
+        opt_result = file.readlines()
+
+    # Find the last line with 'optimize' in it
+    last_optimize_index = None
+    for idx in range(len(opt_result) - 1, -1, -1):
+        if 'optimize' in opt_result[idx]:
+            last_optimize_index = idx
+            last_optimize_line = opt_result[idx]
+            break
+    if last_optimize_index is None:
+        raise ValueError("No line with 'optimize' found in the file.")
+
+    # Extract everything after the last 'optimize' line
+    opt_result = opt_result[last_optimize_index + 1:]
+
+    # Count the number of lines that start with 'lens'
+    lens_count = sum(1 for line in opt_result if line.startswith('lens'))
+
+    # Initialize a dictionary to hold the lens parameters
+    lens_params_dict = {}
+
+    # Extract the lens parameters
+    lens_params = []
+    for line in opt_result:
+        if line.startswith('lens'):
+            parts = re.split(r'\s+', line.strip())
+            lens_name = parts[1]
+            params = [float(x) for x in parts[2:]]
+
+            # Store the parameters in the dictionary
+            lens_params_dict[lens_name] = params
+            lens_params.append((lens_name, params))
+
+    # Remove the first lens parameter
+    if lens_params:
+        for i in range(len(lens_params)):
+            lens_name, params = lens_params[i]
+            lens_params_dict[lens_name] = params[1:]
+    
+    # Extract the chi2 
+    chi2_line = next((line for line in opt_result if 'chi^2' in line), None)
+    if chi2_line is None:
+        raise ValueError("No line with 'chi2' found in the file.")
+
+    chi2_value = float(chi2_line.split('=')[-1].strip().split()[0])
+    print(f"✅ Extracted chi2 value: {chi2_value}")
+
+    # Number of len profiles
+    num_lens_profiles = len(lens_params_dict)
+
+    # Use generic column names: param1, param2, ...
+    df = pd.DataFrame()
+    rows = []
+    max_param_len = 0
+
+    for lens_name, params in lens_params_dict.items():
+        row = {'Lens Name': lens_name}
+        for i, val in enumerate(params):
+            row[f'param{i+1}'] = val
+        rows.append(row)
+        if len(params) > max_param_len:
+            max_param_len = len(params)
+
+    columns = ['Lens Name'] + [f'param{i+1}' for i in range(max_param_len)]
+    df = pd.DataFrame(rows, columns=columns)
+    
+    # Load the input parameters from the Python file
+    with open('Test/POS+MAG/SIE+SHEAR/pos_point.py', 'r') as file:
+        py = file.readlines()
+
+    # Extracting the input parameters from the Python file
+    set_lens_lines = [line for line in py if line.startswith('glafic.set_lens(')]
+    if not set_lens_lines:
+        raise ValueError("No lines starting with 'glafic.set_lens(' found in the file.")
+
+    set_lens_params = []
+    for line in set_lens_lines:
+        match = re.search(r'set_lens\((.*?)\)', line)
+        if match:
+            params_str = match.group(1)
+            params = [param.strip() for param in params_str.split(',')]
+            set_lens_params.append(params)
+        else:
+            raise ValueError(f"No valid parameters found in line: {line.strip()}")
+
+    # Store the parameters in a dictionary
+    set_lens_dict = {}
+    for params in set_lens_params:
+        if len(params) < 3:
+            raise ValueError(f"Not enough parameters found in line: {params}")
+        lens_name = params[1].strip("'\"")  # Remove quotes from lens name
+        lens_params = [float(x) for x in params[2:]]  # Skip index and lens name
+        set_lens_dict[lens_name] = lens_params
+
+    # Remove the first lens parameter
+    if set_lens_dict:
+        for lens_name, params in set_lens_dict.items():
+            set_lens_dict[lens_name] = params[1:]  # Remove the first parameter (index)
+
+    # Use generic column names: param1, param2, ...
+    df_input = pd.DataFrame()
+    rows_input = []
+    max_param_len_input = 0
+    for lens_name, params in set_lens_dict.items():
+        row = {'Lens Name': lens_name}
+        for i, val in enumerate(params):
+            row[f'param{i+1}'] = val
+        rows_input.append(row)
+        if len(params) > max_param_len_input:
+            max_param_len_input = len(params)
+    columns_input = ['Lens Name'] + [f'param{i+1}' for i in range(max_param_len_input)]
+    df_input = pd.DataFrame(rows_input, columns=columns_input)
+    
+    # Extract input flags from the Python file
+    set_flag_lines = [line for line in py if line.startswith('glafic.setopt_lens(')]
+    if not set_flag_lines:
+        raise ValueError("No lines starting with 'glafic.setopt_lens(' found in the file.")
+    set_flag_params = []
+    for line in set_flag_lines:
+        match = re.search(r'setopt_lens\((.*?)\)', line)
+        if match:
+            params_str = match.group(1)
+            params = [param.strip() for param in params_str.split(',')]
+            set_flag_params.append(params)
+        else:
+            raise ValueError(f"No valid parameters found in line: {line.strip()}")
+    
+    # Store the parameters in a dictionary
+    set_flag_dict = {}
+    for params in set_flag_params:
+        if len(params) < 2:
+            raise ValueError(f"Not enough parameters found in line: {params}")
+        # The lens name is not present in setopt_lens, so use the lens index to map to set_lens_dict
+        lens_index = params[0].strip("'\"")
+        # Find the lens name corresponding to this index from set_lens_params
+        lens_name = None
+        for lens_params in set_lens_params:
+            if lens_params[0].strip("'\"") == lens_index:
+                lens_name = lens_params[1].strip("'\"")
+                break
+        if lens_name is None:
+            raise ValueError(f"Lens name for index {lens_index} not found in set_lens_params")
+        flag = ','.join(params[1:])  # Join all flag values as a string
+        set_flag_dict[lens_name] = flag
+   
+    # Remove the first flag parameter
+    if set_flag_dict:
+        for lens_name, flag in set_flag_dict.items():
+            flag_parts = flag.split(',')
+            set_flag_dict[lens_name] = ','.join(flag_parts[1:])  # Remove the first flag parameter
+    
+    # Dynamically create columns: 'Lens Name', 'flag1', 'flag2', ..., based on the maximum number of flags
+    df_flag = pd.DataFrame()
+    rows_flag = []
+    max_flag_len = 0
+    
+    # First, determine the maximum number of flags
+    for flag in set_flag_dict.values():
+        flag_parts = flag.split(',')
+        if len(flag_parts) > max_flag_len:
+            max_flag_len = len(flag_parts)
+    for lens_name, flag in set_flag_dict.items():
+        flag_parts = flag.split(',')
+        row = {'Lens Name': lens_name}
+        for i, val in enumerate(flag_parts):
+            row[f'flag{i+1}'] = val
+        rows_flag.append(row)
+    columns_flag = ['Lens Name'] + [f'flag{i+1}' for i in range(max_flag_len)]  
+    df_flag = pd.DataFrame(rows_flag, columns=columns_flag)
+    
+    # Combine all dataframes into a list of dataframes for each lens
+    dfs = []
+    
+    for i in range(num_lens_profiles):
+        lens_name = df['Lens Name'][i]
+        
+        # Find the model type (case-insensitive match)
+        model_type = None
+        for m in model_list:
+            if m.lower() == lens_name.lower():
+                model_type = m
+                break
+        if model_type is None:
+            continue
+
+        symbols = model_params[model_type][:7]
+        # Row 2: input
+        row_input = pd.DataFrame([df_input.iloc[i, 1:8].values], columns=symbols)
+        # Row 3: output
+        row_output = pd.DataFrame([df.iloc[i, 1:8].values], columns=symbols)
+        # Row 4: flags
+        row_flags = pd.DataFrame([df_flag.iloc[i, 1:8].values], columns=symbols)
+
+        # Stack vertically, add a label column for row type
+        lens_df = pd.concat([
+            row_input.assign(Type='Input'),
+            row_output.assign(Type='Output'),
+            row_flags.assign(Type='Flag')
+        ], ignore_index=True)
+        lens_df.insert(0, 'Lens Name', lens_name)
+        
+        # Move 'Type' to the second column
+        cols = lens_df.columns.tolist()
+        cols.insert(1, cols.pop(cols.index('Type')))
+        lens_df = lens_df[cols]
+        dfs.append(lens_df)
+    
+    # Anomaly Calculation
+    columnn_names = ['x', 'y', 'mag', 'pos_err', 'mag_err', '1', '2', '3']
+    obs_point = pd.read_csv('obs_point/obs_point_(POS+FLUX).dat', delim_whitespace=True, header=None, skiprows=1, names=columnn_names)
+    out_point = pd.read_csv(model_path + '/' + model_ver + '_point.dat', delim_whitespace=True, header=None, skiprows=1, names=columnn_names)
+    out_point.drop(columns=['mag_err', '1', '2', '3'], inplace=True)
+
+    # Drop rows in obs_point where the corresponding out_point['mag'] < 1
+    mask = abs(out_point['mag']) >= 1
+    out_point = out_point[mask[:len(out_point)]].reset_index(drop=True)
+    out_point['x_diff'] = abs(out_point['x'] - obs_point['x'])
+    out_point['y_diff'] = abs(out_point['y'] - obs_point['y'])
+    out_point['mag_diff'] = abs(abs(out_point['mag']) - abs(obs_point['mag']))
+    out_point['pos_sq'] = np.sqrt((out_point['x_diff']**2 + out_point['y_diff']**2).astype(float))  # Plotted on graph
+
+    # RMS
+    pos_rms = np.average(out_point['pos_sq'])
+
+    mag_rms = np.average(np.sqrt((out_point['mag_diff']**2).astype(float)))
+
+    return pos_rms, mag_rms, dfs, chi2_value
 
 # ==== Main ====
 total_iterations = len(m) * len(n) * len(o)
@@ -166,6 +435,71 @@ try:
                     glafic.writecrit(1.0)
                     glafic.writelens(1.0)
                     glafic.quit()
+
+                    columns = ['x', 'y', 'm', 'm_err']
+
+                    df = pd.DataFrame(columns=['strength', 'pa', 'kappa', 'num_images', 'pos_rms', 'mag_rms', 't_shear_str', 't_shear_pa', 't_shear_kappa', 'sie_vel_disp', 'sie_pa', 'sie_ell', 'chi2'])
+
+                    model_ver = model_name
+                    model_path_0 = model_output_dir
+
+                    if 'POS+FLUX' in model_ver:
+                        constraint = 'pos_flux'
+                    elif 'POS' in model_ver:
+                        constraint = 'pos'
+
+                    pos_rms, mag_rms, dfs, chi2 = rms_extract(model_ver, model_path_0, constraint)
+
+                    file_name = model_path
+
+                    if os.path.exists(file_name):
+                        data = pd.read_csv(file_name, delim_whitespace=True, skiprows=1, header=None, names=columns)
+                        num_images = len(data)
+                        df = pd.concat([df, pd.DataFrame({
+                            'strength': [m[i]],
+                            'pa': [n[j]],
+                            'kappa': [o[k]],
+                            'num_images': [num_images],
+                            'pos_rms': [pos_rms],
+                            'mag_rms': [mag_rms],
+                            't_shear_str': dfs[1]['$\gamma$'][1],
+                            't_shear_pa': dfs[1]['$θ_{\gamma}$'][1],
+                            't_shear_kappa': dfs[1]['$\kappa$'][1],
+                            'sie_vel_disp': dfs[0]['$\sigma$'][1],
+                            'sie_pa': dfs[0]['$θ_{e}$'][1],
+                            'sie_ell': dfs[0]['e'][1],
+                            'chi2': chi2
+
+                        })], ignore_index=True)
+                        if data.empty:
+                            print(f"File {file_name} is empty.")
+                        else:
+                            print(f"File {file_name} exists and is not empty.")
+                            if not os.path.exists('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/Test/' + model_output_dir.split('/')[-1] + '_summary.csv'):
+                                df.to_csv('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/Test/' + model_output_dir.split('/')[-1] + '_summary.csv', index=False)
+                            else:
+                                old_df = pd.read_csv('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/Test/' + model_output_dir.split('/')[-1] + '_summary.csv')
+                                df = pd.concat([old_df, df], ignore_index=True)
+                                df.to_csv('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/Test/' + model_output_dir.split('/')[-1] + '_summary.csv', index=False)
+                                
+                            # Delete generated files to save space
+                            # Define Files 
+                            crit_file = model_path + '_crit.dat'
+                            lens_file = model_path + '_lens.fits'
+                            point_file = model_path + '_point.dat'
+                            opt_file = model_path + '_optresult.dat'
+
+                            # Delete Files
+                            if os.path.exists(crit_file):
+                                os.remove(crit_file)
+                            if os.path.exists(lens_file):
+                                os.remove(lens_file)
+                            if os.path.exists(point_file):
+                                os.remove(point_file)
+                            if os.path.exists(opt_file):
+                                os.remove(opt_file)
+                    else:
+                        print(f"File {file_name} does not exist.")
 
                     iteration_count += 1
                     pbar.update(1)
