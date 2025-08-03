@@ -9,6 +9,7 @@ import time
 import requests
 import json  # ### NEW ### - For handling the restart file
 import pandas as pd
+import re
 
 # ==== Config ====
 m = [round(x, 4) for x in np.linspace(0.01, 0.5, 100)]
@@ -450,7 +451,7 @@ try:
 
                     pos_rms, mag_rms, dfs, chi2 = rms_extract(model_ver, model_path_0, constraint)
 
-                    file_name = model_path
+                    file_name = model_path + '_point.dat'
 
                     if os.path.exists(file_name):
                         data = pd.read_csv(file_name, delim_whitespace=True, skiprows=1, header=None, names=columns)
