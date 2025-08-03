@@ -13,8 +13,8 @@ import re
 
 # ==== Config ====
 m = [round(x, 4) for x in np.linspace(0.01, 0.5, 100)]
-n = [round(x, 1) for x in np.linspace(0, 360, 50)]
-o = [round(x, 4) for x in np.linspace(-0.5, 0.5, 50)]
+n = [round(x, 1) for x in np.linspace(0, 360, 100)]
+o = [round(x, 4) for x in np.linspace(-0.5, 0.5, 100)]
 
 ram_threshold_percent = 90
 disk_check_interval = 100
