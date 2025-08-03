@@ -15,7 +15,7 @@ n = [round(x, 1) for x in np.linspace(0, 360, 50)]
 o = [round(x, 4) for x in np.linspace(-0.5, 0.5, 50)]
 
 ram_threshold_percent = 90
-disk_check_interval = 10
+disk_check_interval = 100
 critical_disk_usage_percent = 90
 
 model_output_dir = '/Volumes/T7 Shield/Sim 6'
