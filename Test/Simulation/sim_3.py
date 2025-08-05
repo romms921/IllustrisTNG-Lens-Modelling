@@ -35,7 +35,7 @@ with tqdm(total=total_iterations, desc="Processing") as pbar:
             glafic.set_point(1, 1.0, 20.78, 20.78)
 
             glafic.setopt_lens(1, 0, 1, 1, 1, 1, 1, 0, 0)
-            glafic.setopt_lens(2, 0, 0, 0, 0, 0, 0, 0, 0)
+            glafic.setopt_lens(2, 0, 0, 0, 0, 1, 1, 0, 0)
             glafic.setopt_point(1, 0, 1, 1)
 
             glafic.model_init(verb = 0)
