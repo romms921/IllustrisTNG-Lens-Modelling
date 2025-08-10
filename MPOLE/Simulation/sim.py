@@ -12,9 +12,9 @@ import pandas as pd
 import re
 
 # ==== Config ====
-m = [round(x, 5) for x in np.linspace(0.01, 0.5, 100)]
+m = [round(x, 5) for x in np.linspace(0.001, 0.1, 100)]
 n = [round(x, 4) for x in np.linspace(0, 360, 100)]
-o = [round(x, 5) for x in np.linspace(-0.5, 0.5, 100)]
+o = [1, 2, 3]
 
 ram_threshold_percent = 90
 disk_check_interval = 100
@@ -429,7 +429,7 @@ try:
                 for k in range(k_start_index, len(o)):
 
                     # --- This is the start of your original loop body ---
-                    model_name = f'SIE_POS_SHEAR_{m[i]}_{n[j]}_{o[k]}'
+                    model_name = f'SIE_POS_MPOLE_1_{m[i]}_{n[j]}_{o[k]}'
                     model_path = os.path.join(model_output_dir, model_name)
 
                     print(f"\nProcessing Iteration = {iteration_count + 1} of {total_iterations} | Indices(i={i}, j={j}, k={k})")
@@ -444,10 +444,10 @@ try:
                     glafic.set_secondary('ran_seed -122000', verb=0)
                     glafic.startup_setnum(2, 0, 1)
                     glafic.set_lens(1, 'sie', 0.261343256161012, 1.549839e+02, 20.78, 20.78, 0.107, 23.38, 0.0, 0.0)
-                    glafic.set_lens(2, 'pert', 0.261343256161012, 1.0, 20.78, 20.78, m[i], n[j], 0.0, o[k])
+                    glafic.set_lens(2, 'mpole', 0.261343256161012, 1.0, 20.78, 20.78, m[i], n[j], 1, o[k])
                     glafic.set_point(1, 1.0, 20.78, 20.78)
                     glafic.setopt_lens(1, 0, 1, 1, 1, 1, 1, 0, 0)
-                    glafic.setopt_lens(2, 0, 0, 0, 0, 0, 0, 0, 0)
+                    glafic.setopt_lens(2, 0, 0, 1, 1, 0, 0, 0, 0)
                     glafic.setopt_point(1, 0, 1, 1)
                     glafic.model_init(verb=0)
                     glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS).dat')
@@ -459,7 +459,7 @@ try:
 
                     columns = ['x', 'y', 'm', 'm_err']
 
-                    df = pd.DataFrame(columns=['strength', 'pa', 'kappa', 'num_images', 'pos_rms', 'mag_rms', 't_shear_str', 't_shear_pa', 't_shear_kappa', 'sie_vel_disp', 'sie_pa', 'sie_ell', 'chi2'])
+                    df = pd.DataFrame(columns=['strength', 'pa', 'n', 'num_images', 'pos_rms', 'mag_rms', 't_mpole_str', 't_mpole_pa', 't_mpole_n', 'sie_vel_disp', 'sie_pa', 'sie_ell', 'chi2', 'sie_x', 'sie_y', 'mpole_x', 'mpole_y'])
 
                     model_ver = model_name
                     model_path_0 = model_output_dir
@@ -488,13 +488,17 @@ try:
                             'num_images': [num_images],
                             'pos_rms': [pos_rms],
                             'mag_rms': [mag_rms],
-                            't_shear_str': [dfs[1]['$\gamma$'][1]],
-                            't_shear_pa': [dfs[1]['$θ_{\gamma}$'][1]],
-                            't_shear_kappa': [dfs[1]['$\kappa$'][1]],
+                            't_mpole_str': [dfs[1]['$\epsilon$'][1]],
+                            't_mpole_pa': [dfs[1]['$θ_{m}$'][1]],
+                            't_mpole_n': [dfs[1]['n'][1]],
                             'sie_vel_disp': [dfs[0]['$\sigma$'][1]],
                             'sie_pa': [dfs[0]['$θ_{e}$'][1]],
                             'sie_ell': [dfs[0]['e'][1]],
-                            'chi2': [chi2]
+                            'chi2': [chi2],
+                            'sie_x': [dfs[0]['x'][1]],
+                            'sie_y': [dfs[0]['y'][1]],
+                            'mpole_x': [dfs[1]['x'][1]],
+                            'mpole_y': [dfs[1]['y'][1]]
                         })
                         
                         if data.empty:
@@ -507,13 +511,17 @@ try:
                                 'num_images': [0],
                                 'pos_rms': [0],
                                 'mag_rms': [0], 
-                                't_shear_str': [0],
-                                't_shear_pa': [0],
-                                't_shear_kappa': [0],
+                                't_mpole_str': [0],
+                                't_mpole_pa': [0],
+                                't_mpole_n': [0],
                                 'sie_vel_disp': [0],
                                 'sie_pa': [0],
                                 'sie_ell': [0],
-                                'chi2': [0]
+                                'chi2': [0],
+                                'sie_x': [0],
+                                'sie_y': [0],
+                                'mpole_x': [0],
+                                'mpole_y': [0]
                             })
                         else:
                             print(f"File {file_name} exists and is not empty.")
