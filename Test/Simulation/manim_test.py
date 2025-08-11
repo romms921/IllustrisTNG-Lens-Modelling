@@ -20,8 +20,8 @@ from scipy.interpolate import griddata
 
 from matplotlib.lines import Line2D
 from manim import *
-from manim import config
-config.ffmpeg_executable = "/opt/homebrew/bin/ffmpeg"  # Adjust path as needed
+# from manim import config
+# config.ffmpeg_executable = "/opt/homebrew/bin/ffmpeg"  # Adjust path as needed
 
 os.chdir("/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling")
 df = pd.read_csv('Test/Simulation/sim_3.csv')
@@ -69,6 +69,8 @@ class SurfaceMorphAnimation(ThreeDScene):
             fill_opacity=1,
         )
 
+        start_surface.set_color(GREEN)  # Color the starting surface
+
         # 2. The Final Surface (morphed)
         end_surface = Surface(
             lambda u, v: axes.c2p(u, v, griddata((x,y), z, (u,v), method='cubic', fill_value=0)),
@@ -76,6 +78,7 @@ class SurfaceMorphAnimation(ThreeDScene):
             v_range=[y_min, y_max],
             resolution=(10, 10),
             fill_opacity=1,
+            checkerboard_colors=False
         )
 
         # Color the final surface based on its Z-values
