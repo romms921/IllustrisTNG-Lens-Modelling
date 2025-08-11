@@ -79,11 +79,7 @@ class SurfaceMorphAnimation(ThreeDScene):
         )
 
         # Color the final surface based on its Z-values
-        end_surface.set_fill_by_value(
-            axes=axes,
-            colors=[(PURPLE_A, 0), (RED_B, z.max()/3), (GOLD_A, 2*z.max()/3), (WHITE, z.max())],
-            axis=2
-        )
+        end_surface.set_color(BLUE)
 
         # Add the starting surface to the scene
         self.add(start_surface)
