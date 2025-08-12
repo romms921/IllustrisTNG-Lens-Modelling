@@ -7,7 +7,7 @@ n = [1, 2, 3, 4, 5]
 for i in range(len(m)):
     for j in range(len(n)):
 
-        glafic.init(0.3, 0.7, -1.0, 0.7, f'MPOLE/SIE+MPOLE/SIE_POS_MPOLE_{m[i]}_{n[j]}', 20.0, 20.0, 21.56, 21.56, 0.001, 0.001, 1, verb = 0)
+        glafic.init(0.3, 0.7, -1.0, 0.7, f'MPOLE/POW+MPOLE/POW_POS_MPOLE_{m[i]}_{n[j]}', 20.0, 20.0, 21.56, 21.56, 0.001, 0.001, 1, verb = 0)
 
         glafic.set_secondary('chi2_splane 1', verb = 0)
         glafic.set_secondary('chi2_checknimg 1', verb = 0)
@@ -17,11 +17,11 @@ for i in range(len(m)):
         glafic.set_secondary('ran_seed -122000', verb = 0)
 
         glafic.startup_setnum(2, 0, 1)
-        glafic.set_lens(1, 'sie', 0.261343256161012, 1.58e+02, 20.8512217, 20.8340052, 0.12, -4.0, 0.0, 0.0)
+        glafic.set_lens(1, 'pow', 0.261343256161012, 1.0, 20.78, 20.78, 0.1, -4.0, 0.5, 2.1)
         glafic.set_lens(2, 'mpole', 0.261343256161012, 1.0, 20.80, 20.75, 0.01, -90.0, m[i], n[j])
         glafic.set_point(1, 1.0, 20.78, 20.78)
 
-        glafic.setopt_lens(1, 0, 1, 1, 1, 1, 1, 0, 0)
+        glafic.setopt_lens(1, 0, 0, 1, 1, 1, 1, 1, 1)
         glafic.setopt_lens(2, 0, 0, 1, 1, 1, 1, 0, 0)
         glafic.setopt_point(1, 0, 1, 1)
 
