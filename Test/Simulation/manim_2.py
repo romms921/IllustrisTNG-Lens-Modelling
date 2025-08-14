@@ -22,6 +22,8 @@ class LensAnimation(Scene):
         title = Text("Shear = 0.0").to_edge(UP)
         self.add(axes, title)
 
+        # Reduce number of points by taking every nth point
+        n = 10  # Adjust this number to control point density
         for i, shear in enumerate(shear_str):
             # Load and process data (same as your original code)
             columns = ['x_crit', 'y_crit', 'x_caustic', 'y_caustic', 'x_crit_0', 'y_crit_0', 'x_caustic_0', 'y_caustic_0']
@@ -29,6 +31,8 @@ class LensAnimation(Scene):
                                    delim_whitespace=True, header=None, skiprows=0, names=columns)
             source_points = pd.read_csv(f'{base_folder}SIE_POS_EXTEND_{shear}_point.dat', 
                                       delim_whitespace=True, header=None)
+            
+            crit_curve = crit_curve.iloc[::n]
             
             # Process data (same transformations as your original code)
             image_indices = source_points[source_points[1] == 1.0].index
@@ -38,6 +42,7 @@ class LensAnimation(Scene):
             out_indices = ~source_points.index.isin(image_indices)
             out_df = source_points[out_indices]
             out_df.columns = ['x', 'y', 'mag', 'pos_err']
+            out_df = out_df.iloc[::n]
 
             # Transform coordinates
             for df in [sources, out_df, crit_curve]:
@@ -45,7 +50,6 @@ class LensAnimation(Scene):
                     if col.startswith(('x', 'y')):
                         df[col] = (df[col] - 20)/0.001
 
-            # Create Manim objects
             source_dots = VGroup(*[Dot(axes.c2p(x, y), color=BLUE, radius=0.05) 
                                  for x, y in zip(sources['x'], sources['y'])])
             
@@ -84,5 +88,4 @@ class LensAnimation(Scene):
             old_caustic_dots = caustic_dots
             
             # Wait a bit before next frame
-            self.wait(0.5)
-
+            self.wait(0.2)
