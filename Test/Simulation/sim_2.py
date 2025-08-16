@@ -526,17 +526,17 @@ try:
                         save_to_csv(result_df, current_chunk)
                         
                         # Delete generated files to save space (only if data is not empty)
-                        if not data.empty:
-                            # Define Files 
-                            crit_file = model_path + '_crit.dat'
-                            lens_file = model_path + '_lens.fits'
-                            point_file = model_path + '_point.dat'
-                            opt_file = model_path + '_optresult.dat'
+                        # Define Files 
+                        print(f"Deleting files for model: {model_name}")
+                        crit_file = model_path + '_crit.dat'  
+                        lens_file = model_path + '_lens.fits'
+                        point_file = model_path + '_point.dat'
+                        opt_file = model_path + '_optresult.dat'
 
-                            # Delete Files
-                            for file_to_delete in [crit_file, lens_file, point_file, opt_file]:
-                                if os.path.exists(file_to_delete):
-                                    os.remove(file_to_delete)
+                        # Delete Files
+                        for file_to_delete in [crit_file, lens_file, point_file, opt_file]:
+                            if os.path.exists(file_to_delete):
+                                os.remove(file_to_delete)
                                     
                     else:
                         print(f"File {file_name} does not exist.")

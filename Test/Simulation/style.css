@@ -1,0 +1,72 @@
+/* A colorful and modern theme for the simulation dashboard (Corrected Version) */
+
+Screen {
+    /* Use a solid, dark color for the background. Gradients are not supported. */
+    background: $background-darken-2;
+    color: $text;
+    overflow: hidden;
+}
+
+#main_container {
+    layout: horizontal;
+    height: 100%;
+    width: 100%;
+}
+
+#left_panel, #right_panel {
+    /* Use 50% of the available width */
+    width: 1fr; 
+    padding: 1 2;
+}
+
+#left_panel {
+    /* A border to separate the panels */
+    border-right: thick $primary-lighten-2;
+}
+
+.header {
+    width: 100%;
+    padding: 0 1;
+    margin-bottom: 1;
+    text-align: center;
+    text-style: bold;
+    background: $primary-darken-2;
+    color: $text;
+}
+
+#iteration_counter {
+    width: 100%;
+    text-align: center;
+    color: $text-muted;
+    margin: 1 0;
+}
+
+ProgressBar {
+    margin-top: 1;
+    height: 1;
+    background: $surface-darken-2;
+    /* Color for the progress bar's completed chunk */
+    color: $success; 
+}
+
+SimulationStatus {
+    margin-top: 2;
+    padding: 1;
+    height: auto;
+    border: round $primary;
+    background: $surface;
+}
+
+SystemMonitor {
+    margin-bottom: 2;
+    padding: 1;
+    height: auto;
+    border: round $secondary;
+    background: $surface;
+}
+
+Log {
+    background: $surface;
+    border: round #666666; /* Using a specific hex code for the border */
+    height: 1fr; /* Take up remaining vertical space */
+}
