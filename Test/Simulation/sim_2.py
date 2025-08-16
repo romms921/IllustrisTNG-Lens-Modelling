@@ -12,16 +12,16 @@ import pandas as pd
 import re
 
 # ==== Config ====
-m = [round(x, 5) for x in np.linspace(0.01, 0.5, 100)]
-n = [round(x, 4) for x in np.linspace(0, 360, 100)]
-o = [round(x, 5) for x in np.linspace(-0.5, 0.5, 100)]
+m = [round(x, 5) for x in np.linspace(0.01, 0.5, 50)]
+n = [round(x, 4) for x in np.linspace(0, 360, 10)]
+o = [round(x, 5) for x in np.linspace(-0.5, 0.5, 10)]
 
 ram_threshold_percent = 90
 disk_check_interval = 100
 critical_disk_usage_percent = 90
-CHUNK_SIZE = 10000  # Save to new CSV every 10,000 iterations
+CHUNK_SIZE = 1000  # Save to new CSV every 10,000 iterations
 
-model_output_dir = '/Volumes/T7 Shield/Sim 6'
+model_output_dir = '/Volumes/T7 Shield/Sim 7'
 log_file_path = '/Users/ainsleylewis/Documents/Astronomy/Discord Bot/simulation_log.txt'
 
 restart_file_path = os.path.join(os.path.dirname(log_file_path), 'simulation_restart_state.json')
@@ -429,7 +429,7 @@ try:
                 for k in range(k_start_index, len(o)):
 
                     # --- This is the start of your original loop body ---
-                    model_name = f'SIE_POS_SHEAR_{m[i]}_{n[j]}_{o[k]}'
+                    model_name = f'POW_POS_SHEAR_{m[i]}_{n[j]}_{o[k]}'
                     model_path = os.path.join(model_output_dir, model_name)
 
                     print(f"\nProcessing Iteration = {iteration_count + 1} of {total_iterations} | Indices(i={i}, j={j}, k={k})")
@@ -443,14 +443,15 @@ try:
                     glafic.set_secondary('hvary          0', verb=0)
                     glafic.set_secondary('ran_seed -122000', verb=0)
                     glafic.startup_setnum(2, 0, 1)
-                    glafic.set_lens(1, 'sie', 0.261343256161012, 1.549839e+02, 20.78, 20.78, 0.107, 23.38, 0.0, 0.0)
+                    glafic.set_lens(1, 'pow', 0.261343256161012, 1.0, 20.78, 20.78, 0.107, 23.38, 0.46, 2.1)
                     glafic.set_lens(2, 'pert', 0.261343256161012, 1.0, 20.78, 20.78, m[i], n[j], 0.0, o[k])
                     glafic.set_point(1, 1.0, 20.78, 20.78)
-                    glafic.setopt_lens(1, 0, 1, 1, 1, 1, 1, 0, 0)
-                    glafic.setopt_lens(2, 0, 0, 0, 0, 0, 0, 0, 0)
+                    glafic.setopt_lens(1, 0, 0, 1, 1, 1, 1, 1, 1)
+                    glafic.setopt_lens(2, 0, 0, 0, 0, 1, 1, 0, 1)
                     glafic.setopt_point(1, 0, 1, 1)
                     glafic.model_init(verb=0)
                     glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS).dat')
+                    glafic.parprior('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/Test/Simulation/priorfile.dat')
                     glafic.optimize()
                     glafic.findimg()
                     glafic.writecrit(1.0)
@@ -459,7 +460,10 @@ try:
 
                     columns = ['x', 'y', 'm', 'm_err']
 
-                    df = pd.DataFrame(columns=['strength', 'pa', 'kappa', 'num_images', 'pos_rms', 'mag_rms', 't_shear_str', 't_shear_pa', 't_shear_kappa', 'sie_vel_disp', 'sie_pa', 'sie_ell', 'chi2'])
+                    macro_model_params = model_name.strip().split('_')[0]
+                    macro_columns = model_params[macro_model_params]
+
+                    df = pd.DataFrame(columns=['strength', 'pa', 'kappa', 'num_images', 'pos_rms', 'mag_rms', 't_shear_str', 't_shear_pa', 't_shear_kappa', 'chi2'] + macro_columns)
 
                     model_ver = model_name
                     model_path_0 = model_output_dir
@@ -491,10 +495,8 @@ try:
                             't_shear_str': [dfs[1]['$\gamma$'][1]],
                             't_shear_pa': [dfs[1]['$θ_{\gamma}$'][1]],
                             't_shear_kappa': [dfs[1]['$\kappa$'][1]],
-                            'sie_vel_disp': [dfs[0]['$\sigma$'][1]],
-                            'sie_pa': [dfs[0]['$θ_{e}$'][1]],
-                            'sie_ell': [dfs[0]['e'][1]],
-                            'chi2': [chi2]
+                            'chi2': [chi2],
+                            **{col: [dfs[0][col][1]] for col in macro_columns}
                         })
                         
                         if data.empty:
@@ -510,10 +512,8 @@ try:
                                 't_shear_str': [0],
                                 't_shear_pa': [0],
                                 't_shear_kappa': [0],
-                                'sie_vel_disp': [0],
-                                'sie_pa': [0],
-                                'sie_ell': [0],
-                                'chi2': [0]
+                                'chi2': [0],
+                                **{col: [0] for col in macro_columns}
                             })
                         else:
                             print(f"File {file_name} exists and is not empty.")
