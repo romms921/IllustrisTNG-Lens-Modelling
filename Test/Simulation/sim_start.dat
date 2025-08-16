@@ -1,0 +1,7 @@
+# Simulation Start Params 
+Sim 6:
+m = [round(x, 5) for x in np.linspace(0.01, 0.5, 100)]
+n = [round(x, 4) for x in np.linspace(0, 360, 100)]
+o = [round(x, 5) for x in np.linspace(-0.5, 0.5, 100)]
+
+
