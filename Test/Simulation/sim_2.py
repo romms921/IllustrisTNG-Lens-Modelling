@@ -428,6 +428,10 @@ try:
                 k_start_index = start_k if i == start_i and j == start_j else 0
                 for k in range(k_start_index, len(o)):
 
+                    # Flush terminal every 500 iterations
+                    if iteration_count > 0 and iteration_count % 500 == 0:
+                        print('\033[2J\033[H') # ANSI escape sequence to clear screen
+
                     # --- This is the start of your original loop body ---
                     model_name = f'POW_POS_SHEAR_{m[i]}_{n[j]}_{o[k]}'
                     model_path = os.path.join(model_output_dir, model_name)
