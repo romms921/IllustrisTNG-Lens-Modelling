@@ -302,7 +302,26 @@ class SimulationApp(App):
                         # --- Model Generation ---
                         # ** FIX HERE: Pass the DIRECTORY to glafic.init **
                         glafic.init(0.3, 0.7, -1.0, 0.7, model_output_dir, 20.0, 20.0, 21.56, 21.56, 0.01, 0.01, 1, verb=0)
-                        # ... all your glafic.set... calls ...
+                        glafic.set_secondary('chi2_splane 1', verb=0)
+                        glafic.set_secondary('chi2_checknimg 1', verb=0)
+                        glafic.set_secondary('chi2_restart   -1', verb=0)
+                        glafic.set_secondary('chi2_usemag    1', verb=0)
+                        glafic.set_secondary('hvary          0', verb=0)
+                        glafic.set_secondary('ran_seed -122000', verb=0)
+                        glafic.startup_setnum(2, 0, 1)
+                        glafic.set_lens(1, 'pow', 0.261343256161012, 1.0, 20.78, 20.78, 0.107, 23.38, 0.46, 2.1)
+                        glafic.set_lens(2, 'pert', 0.261343256161012, 1.0, 20.78, 20.78, m[i], n[j], 0.0, o[k])
+                        glafic.set_point(1, 1.0, 20.78, 20.78)
+                        glafic.setopt_lens(1, 0, 0, 1, 1, 1, 1, 1, 1)
+                        glafic.setopt_lens(2, 0, 0, 0, 0, 1, 1, 0, 1)
+                        glafic.setopt_point(1, 0, 1, 1)
+                        glafic.model_init(verb=0)
+                        glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS).dat')
+                        glafic.parprior('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/Test/Simulation/priorfile.dat')
+                        glafic.optimize()
+                        glafic.findimg()
+                        glafic.writecrit(1.0)
+                        glafic.writelens(1.0)
                         glafic.quit()
                         
                         # --- Data Extraction ---
@@ -315,7 +334,67 @@ class SimulationApp(App):
                             'iteration': iteration_count + 1, 'total': total_iterations
                         })
 
-                        # ... Your CSV saving logic and file cleanup ...
+                        file_name = model_path + '_point.dat'
+
+                        # Calculate current chunk number based on iteration count
+                        current_chunk = calculate_chunk_number(iteration_count + 1)
+
+                        if os.path.exists(file_name):
+                            data = pd.read_csv(file_name, delim_whitespace=True, skiprows=1, header=None, names=columns)
+                            num_images = len(data)
+                            
+                            # Create the result dataframe
+                            result_df = pd.DataFrame({
+                                'strength': [m[i]],
+                                'pa': [n[j]],
+                                'kappa': [o[k]],
+                                'num_images': [num_images],
+                                'pos_rms': [pos_rms],
+                                'mag_rms': [mag_rms],
+                                't_shear_str': [dfs[1]['$\gamma$'][1]],
+                                't_shear_pa': [dfs[1]['$θ_{\gamma}$'][1]],
+                                't_shear_kappa': [dfs[1]['$\kappa$'][1]],
+                                'chi2': [chi2],
+                                **{col: [dfs[0][col][1]] for col in macro_columns}
+                            })
+                            
+                            if data.empty:
+                                print(f"File {file_name} is empty.")
+                                # Override with zeros for empty data
+                                result_df = pd.DataFrame({
+                                    'strength': [m[i]],
+                                    'pa': [n[j]],
+                                    'kappa': [o[k]],
+                                    'num_images': [0],
+                                    'pos_rms': [0],
+                                    'mag_rms': [0], 
+                                    't_shear_str': [0],
+                                    't_shear_pa': [0],
+                                    't_shear_kappa': [0],
+                                    'chi2': [0],
+                                    **{col: [0] for col in macro_columns}
+                                })
+                            else:
+                                print(f"File {file_name} exists and is not empty.")
+                                
+                            # Save to the appropriate CSV chunk
+                            save_to_csv(result_df, current_chunk)
+                            
+                            # Delete generated files to save space (only if data is not empty)
+                            # Define Files 
+                            print(f"Deleting files for model: {model_name}")
+                            crit_file = model_path + '_crit.dat'  
+                            lens_file = model_path + '_lens.fits'
+                            point_file = model_path + '_point.dat'
+                            opt_file = model_path + '_optresult.dat'
+
+                            # Delete Files
+                            for file_to_delete in [crit_file, lens_file, point_file, opt_file]:
+                                if os.path.exists(file_to_delete):
+                                    os.remove(file_to_delete)
+                                        
+                        else:
+                            print(f"File {file_name} does not exist.")
                         
                         iteration_count += 1
                         if iteration_count % 100 == 0:
