@@ -12,9 +12,9 @@ import pandas as pd
 import re
 
 # ==== Config ====
-m = [round(x, 5) for x in np.linspace(0.01, 0.5, 50)]
-n = [round(x, 4) for x in np.linspace(0, 360, 10)]
-o = [round(x, 5) for x in np.linspace(-0.5, 0.5, 10)]
+m = [round(x, 3) for x in np.linspace(0.01, 0.5, 50)]
+n = [round(x, 1) for x in np.linspace(0, 360, 10)]
+o = [round(x, 2) for x in np.linspace(-0.5, 0.5, 10)]
 
 ram_threshold_percent = 90
 disk_check_interval = 100
@@ -441,7 +441,7 @@ try:
                     # --- Model Generation ---
                     glafic.init(0.3, 0.7, -1.0, 0.7, model_path, 20.0, 20.0, 21.56, 21.56, 0.01, 0.01, 1, verb=0)
                     glafic.set_secondary('chi2_splane 1', verb=0)
-                    glafic.set_secondary('chi2_checknimg 1', verb=0)
+                    glafic.set_secondary('chi2_checknimg 0', verb=0)
                     glafic.set_secondary('chi2_restart   -1', verb=0)
                     glafic.set_secondary('chi2_usemag    1', verb=0)
                     glafic.set_secondary('hvary          0', verb=0)
