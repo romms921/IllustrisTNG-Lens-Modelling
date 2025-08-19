@@ -7,6 +7,7 @@ o = [round(x, 5) for x in np.linspace(-0.5, 0.5, 100)]
 
 Sim 7:
 POW + SHEAR (Free Shear Free POW)
-m = [round(x, 5) for x in np.linspace(0.01, 0.5, 50)]
-n = [round(x, 4) for x in np.linspace(0, 360, 10)]
-o = [round(x, 5) for x in np.linspace(-0.5, 0.5, 10)]
+m = [round(x, 3) for x in np.linspace(0.01, 0.5, 50)]
+n = [round(x, 1) for x in np.linspace(0, 360, 10)]
+o = [round(x, 2) for x in np.linspace(-0.5, 0.5, 10)]
+Prior - PWI (1.8 - 2.3)
