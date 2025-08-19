@@ -10,10 +10,11 @@ import requests
 import json  # ### NEW ### - For handling the restart file
 import pandas as pd
 import re
+import subprocess
 
 # ==== Config ====
-m = [round(x, 5) for x in np.linspace(0.001, 0.1, 1000)]
-n = [round(x, 5) for x in np.linspace(0, 360, 1000)]
+m = [round(x, 5) for x in np.linspace(0.001, 0.1, 100)]
+n = [round(x, 5) for x in np.linspace(0, 360, 100)]
 
 ram_threshold_percent = 90
 disk_check_interval = 100
@@ -26,6 +27,9 @@ log_file_path = '/Users/ainsleylewis/Documents/Astronomy/Discord Bot/simulation_
 restart_file_path = os.path.join(os.path.dirname(log_file_path), 'simulation_restart_state.json')
 
 # ==== Helpers ====
+def get_cpu_usage():
+    return psutil.cpu_percent(interval=0)
+
 def get_memory_usage():
     return psutil.virtual_memory().percent
 
@@ -413,6 +417,7 @@ except FileNotFoundError:
     last_disk_used_percent = 0
     last_disk_free_bytes = 0
 
+
 # ==== Main Loop ====
 pbar = None
 try:
@@ -424,7 +429,8 @@ try:
                 # On the first resumed 'i' and 'j', start 'k' from its saved state. Otherwise, start 'k' from 0.
                     # Flush terminal every 500 iterations
                     if iteration_count > 0 and iteration_count % 500 == 0:
-                        print('\033[2J\033[H') # ANSI escape sequence to clear screen
+                        subprocess.run(['clear'], shell=True)
+                        time.sleep(0.5)  # Give terminal time to clear
 
                     # --- This is the start of your original loop body ---
                     model_name = f'POW_POS_MPOLE_{m[i]}_{n[j]}'
@@ -461,7 +467,7 @@ try:
                     macro_model_params = model_name.strip().split('_')[0]
                     macro_columns = model_params[macro_model_params]
 
-                    df = pd.DataFrame(columns=['strength', 'pa', 'kappa', 'num_images', 'pos_rms', 'mag_rms', 't_shear_str', 't_shear_pa', 't_shear_kappa', 'chi2'] + macro_columns)
+                    df = pd.DataFrame(columns=['strength', 'pa', 'num_images', 'pos_rms', 'mag_rms', 't_mpole_str', 't_mpole_pa', 'chi2'] + macro_columns)
 
                     model_ver = model_name
                     model_path_0 = model_output_dir
@@ -567,6 +573,7 @@ try:
                     # Use pbar's internal stats for better ETA
                     avg_time_per_iteration = pbar.format_dict['elapsed'] / pbar.n if pbar.n > 0 else 0
                     approx_time_remaining = (total_iterations - iteration_count) * avg_time_per_iteration
+                    last_cpu_usage = get_cpu_usage()
 
                     progress_info = {
                         'current_iteration': iteration_count,
@@ -576,6 +583,7 @@ try:
                         'approx_time_remaining': approx_time_remaining,
                         'ram_usage_percent': last_ram_usage,
                         'disk_threat_level': last_threat,
+                        'cpu_usage_percent': last_cpu_usage,
                         'disk_used_percent': last_disk_used_percent,
                         'disk_free': round(last_disk_free_bytes / (1024 ** 3), 2),
                         'current_chunk': chunk_number
@@ -602,9 +610,9 @@ except KeyboardInterrupt:
         if iteration_count > iterations_done:
             save_j = j - 1 if j > j_start_index else j
             save_i = i if j > j_start_index else i
-            save_restart_state(restart_file_path, save_i, save_j, 0, chunk_number)
+            save_restart_state(restart_file_path, save_i, save_j, chunk_number)
         else:
-            save_restart_state(restart_file_path, start_i, start_j, 0, chunk_number)
+            save_restart_state(restart_file_path, start_i, start_j, chunk_number)
     else:
         print("⚠️ Could not determine current state for restart file")
 
