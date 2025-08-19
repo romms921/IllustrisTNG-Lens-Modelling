@@ -6,4 +6,4 @@
 
 # Sim 2 
 range lens 1 8 1.5 2.5
-match lens 1 8 2 8 1.0 0.0
+match lens 2 8 1 8 1.0 0.0

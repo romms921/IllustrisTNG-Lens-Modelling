@@ -54,7 +54,7 @@ for i in range(len(m)):
     glafic.set_secondary('ran_seed -122000', verb = 0)
 
     glafic.startup_setnum(2, 0, 1)
-    glafic.set_lens(1, 'pow', 0.261343256161012, 1.0, 20.78, 20.78, 0.1, -4.0, 0.5, 2.1)
+    glafic.set_lens(1, 'pow', 0.261343256161012, 1.0, 20.78, 20.78, 0.1, -4.0, 0.5, 2.0)
     glafic.set_lens(2, 'mpole', 0.261343256161012, 1.0, 20.80, 20.75, 0.01, -90.0, m[i], 1)
     glafic.set_point(1, 1.0, 20.78, 20.78)
 
