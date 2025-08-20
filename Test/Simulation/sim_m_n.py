@@ -11,10 +11,11 @@ import json  # ### NEW ### - For handling the restart file
 import pandas as pd
 import re
 import subprocess
+import sys
 
 # ==== Config ====
-m = [round(x, 5) for x in np.linspace(0.001, 0.1, 100)]
-n = [round(x, 5) for x in np.linspace(0, 360, 100)]
+m = [round(x, 5) for x in np.linspace(0.001, 0.1, 1000)]
+n = [round(x, 5) for x in np.linspace(0, 360, 1000)]
 
 ram_threshold_percent = 90
 disk_check_interval = 100
@@ -27,6 +28,10 @@ log_file_path = '/Users/ainsleylewis/Documents/Astronomy/Discord Bot/simulation_
 restart_file_path = os.path.join(os.path.dirname(log_file_path), 'simulation_restart_state.json')
 
 # ==== Helpers ====
+def clear_terminal():
+    sys.stdout.write("\033c")  # or "\033[2J\033[H"
+    sys.stdout.flush()
+
 def get_cpu_usage():
     return psutil.cpu_percent(interval=0)
 
@@ -429,7 +434,7 @@ try:
                 # On the first resumed 'i' and 'j', start 'k' from its saved state. Otherwise, start 'k' from 0.
                     # Flush terminal every 500 iterations
                     if iteration_count > 0 and iteration_count % 500 == 0:
-                        subprocess.run(['clear'], shell=True)
+                        clear_terminal()
                         time.sleep(0.5)  # Give terminal time to clear
 
                     # --- This is the start of your original loop body ---
@@ -591,6 +596,9 @@ try:
 
                     with open(log_file_path, 'w') as log_file: # Changed to 'w' to overwrite log each time
                         log_file.write(f"Iteration {iteration_count}/{total_iterations}: {progress_info}\n")
+                    
+                    if last_ram_usage > ram_threshold_percent:
+                        time.sleep(10)
 
                     if iteration_count % 100 == 0:
                         upload_to_replit(log_file_path)
