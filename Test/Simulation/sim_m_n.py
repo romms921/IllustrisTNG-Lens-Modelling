@@ -456,7 +456,7 @@ try:
                     glafic.set_lens(2, 'mpole', 0.261343256161012, 1.0, 20.78, 20.78, m[i], n[j], 1.0, 1.0)
                     glafic.set_point(1, 1.0, 20.78, 20.78)
                     glafic.setopt_lens(1, 0, 0, 1, 1, 1, 1, 1, 1)
-                    glafic.setopt_lens(2, 0, 0, 0, 0, 1, 1, 0, 1)
+                    glafic.setopt_lens(2, 0, 0, 1, 1, 1, 1, 0, 1)
                     glafic.setopt_point(1, 0, 1, 1)
                     glafic.model_init(verb=0)
                     glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS).dat')
