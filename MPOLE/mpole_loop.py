@@ -44,7 +44,7 @@ import glafic
 m = [1, 2, 3, 4, 5]
 
 for i in range(len(m)):
-    glafic.init(0.3, 0.7, -1.0, 0.7, f'MPOLE/POW+MPOLE/POW_POS+FLUX_MPOLE_{m[i]}', 20.0, 20.0, 21.56, 21.56, 0.001, 0.001, 1, verb = 0)
+    glafic.init(0.3, 0.7, -1.0, 0.7, f'MPOLE/POW+MPOLE/POW_POS_MPOLE_{m[i]}', 20.0, 20.0, 21.56, 21.56, 0.001, 0.001, 1, verb = 0)
 
     glafic.set_secondary('chi2_splane 1', verb = 0)
     glafic.set_secondary('chi2_checknimg 1', verb = 0)
@@ -65,7 +65,7 @@ for i in range(len(m)):
     # model_init needs to be done again whenever model parameters are changed
     glafic.model_init(verb = 0)
 
-    glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS+FLUX).dat')
+    glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS).dat')
     glafic.parprior('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/MPOLE/priorfile.dat')
     glafic.optimize()
     glafic.findimg()
