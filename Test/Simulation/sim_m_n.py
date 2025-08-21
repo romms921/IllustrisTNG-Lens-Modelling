@@ -231,7 +231,7 @@ def rms_extract(model_ver, model_path, constraint):
     df = pd.DataFrame(rows, columns=columns)
     
     # Load the input parameters from the Python file
-    with open('Test/POS+MAG/SIE+SHEAR/pos_point.py', 'r') as file:
+    with open('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/Test/POS+MAG/SIE+SHEAR/pos_point.py', 'r') as file:
         py = file.readlines()
 
     # Extracting the input parameters from the Python file
@@ -373,7 +373,7 @@ def rms_extract(model_ver, model_path, constraint):
     
     # Anomaly Calculation
     columnn_names = ['x', 'y', 'mag', 'pos_err', 'mag_err', '1', '2', '3']
-    obs_point = pd.read_csv('obs_point/obs_point_(POS+FLUX).dat', delim_whitespace=True, header=None, skiprows=1, names=columnn_names)
+    obs_point = pd.read_csv('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS+FLUX).dat', delim_whitespace=True, header=None, skiprows=1, names=columnn_names)
     out_point = pd.read_csv(model_path + '/' + model_ver + '_point.dat', delim_whitespace=True, header=None, skiprows=1, names=columnn_names)
     out_point.drop(columns=['mag_err', '1', '2', '3'], inplace=True)
 
