@@ -22,7 +22,7 @@ disk_check_interval = 100
 critical_disk_usage_percent = 90
 CHUNK_SIZE = 1000  # Save to new CSV every 10,000 iterations
 
-model_output_dir = '/Volumes/T7 Shield/Sim 9'
+model_output_dir = '/Volumes/T7 Shield/Sim 10'
 log_file_path = '/Users/ainsleylewis/Documents/Astronomy/Discord Bot/simulation_log.txt'
 
 restart_file_path = os.path.join(os.path.dirname(log_file_path), 'simulation_restart_state.json')
@@ -453,7 +453,7 @@ try:
                     glafic.set_secondary('ran_seed -122000', verb=0)
                     glafic.startup_setnum(2, 0, 1)
                     glafic.set_lens(1, 'pow', 0.261343256161012, 1.0, 20.78, 20.78, 0.107, 23.38, 0.46, 2.1)
-                    glafic.set_lens(2, 'mpole', 0.261343256161012, 1.0, 20.78, 20.78, m[i], n[j], 3.0, 1.0)
+                    glafic.set_lens(2, 'mpole', 0.261343256161012, 1.0, 20.78, 20.78, m[i], n[j], 4.0, 1.0)
                     glafic.set_point(1, 1.0, 20.78, 20.78)
                     glafic.setopt_lens(1, 0, 0, 1, 1, 1, 1, 1, 1)
                     glafic.setopt_lens(2, 0, 0, 1, 1, 1, 1, 0, 1)
