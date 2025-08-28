@@ -10,7 +10,6 @@ import requests
 import json  # ### NEW ### - For handling the restart file
 import pandas as pd
 import re
-import subprocess
 import sys
 
 # ==== Config ====
@@ -466,7 +465,6 @@ try:
                     # glafic.writecrit(1.0)
                     # glafic.writelens(1.0)
                     glafic.quit()
-
                     columns = ['x', 'y', 'm', 'm_err']
 
                     macro_model_params = model_name.strip().split('_')[0]
