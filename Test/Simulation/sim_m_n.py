@@ -25,7 +25,7 @@ disk_check_interval = 10000
 critical_disk_usage_percent = 90
 CHUNK_SIZE = 100000  # Save to new CSV every 10,000 iterations
 
-model_output_dir = '/Volumes/T7 Shield/Sim 13'
+model_output_dir = '/Volumes/T7 Shield/Sim 14'
 log_file_path = '/Users/ainsleylewis/Documents/Astronomy/Discord Bot/simulation_log.txt'
 
 restart_file_path = os.path.join(os.path.dirname(log_file_path), 'simulation_restart_state.json')
