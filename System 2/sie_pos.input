@@ -1,0 +1,49 @@
+##primary parameters
+hubble	0.7
+omega	0.3089901684739047
+lambda	0.6910098315260953
+prefix	sie_pos
+xmin	-3.0
+ymin	-3.0
+xmax	3.0
+ymax	3.0
+pix_poi	0.01
+pix_ext	0.01
+maxlev	1
+
+##secondary parameters
+ran_seed	-122000
+chi2_restart	-1
+hvary		1
+flag_mcmcall    1
+chi2_splane	1
+
+##define lenses and sources
+startup	1 0 1
+lens   sie     0.2613  1.563051e+02  1.406717e-01  3.749521e-02  2.168966e-01 -1.398259e+00  0.000000e+00  0.000000e+00 
+point  1.0000  8.595813e-02  3.810018e-02
+end_startup
+
+start_setopt
+0 1 1 1 1 1 0 0
+0 1 1
+end_setopt
+
+start_command
+
+readobs_point	/Users/hemiao/Desktop/aRESEARCH/TNG_sytem/model/H_0_varies/obs_point_pos.dat
+parprior	/Users/hemiao/Desktop/aRESEARCH/TNG_sytem/model/H_0_varies/sie_prior.dat
+
+
+optimize
+writelens	1.0
+findimg
+writecrit	1.0
+lenscenter	1.0
+
+#mcmc_sigma	sigfile_qua.txt
+#mcmc		500000
+
+calcein	1.0
+
+quit
