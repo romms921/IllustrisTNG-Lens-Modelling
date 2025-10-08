@@ -10,23 +10,34 @@ import requests
 import json  # ### NEW ### - For handling the restart file
 import pandas as pd
 import re
+import sys
+import csv
+
+sys.stdout = open(os.devnull, 'w')
+sys.stderr = open(os.devnull, 'w')  # if needed
 
 # ==== Config ====
-m = [round(x, 3) for x in np.linspace(0.01, 0.3, 20)]
-n = [round(x, 2) for x in np.linspace(0, 360, 10)]
-o = [round(x, 2) for x in np.linspace(-0.5, 0.5, 10)]
+m = [round(x, 5) for x in np.linspace(0.001, 0.1, 1000)]
+n = [round(x, 5) for x in np.linspace(0, 360, 1000)]
 
 ram_threshold_percent = 90
-disk_check_interval = 100
+disk_check_interval = 10000
 critical_disk_usage_percent = 90
-CHUNK_SIZE = 5000  # Save to new CSV every 10,000 iterations
+CHUNK_SIZE = 100000  # Save to new CSV every 10,000 iterations
 
-model_output_dir = '/Volumes/T7 Shield/Sim 17'
+model_output_dir = '/Volumes/T7 Shield/Sim 14'
 log_file_path = '/Users/ainsleylewis/Documents/Astronomy/Discord Bot/simulation_log.txt'
 
 restart_file_path = os.path.join(os.path.dirname(log_file_path), 'simulation_restart_state.json')
 
 # ==== Helpers ====
+def clear_terminal():
+    sys.stdout.write("\033c")  # or "\033[2J\033[H"
+    sys.stdout.flush()
+
+def get_cpu_usage():
+    return psutil.cpu_percent(interval=0)
+
 def get_memory_usage():
     return psutil.virtual_memory().percent
 
@@ -65,30 +76,29 @@ def upload_to_replit(log_path: str, replit_url: str = "https://fd07c8f5-4e98-4ab
     except Exception as e:
         print(f"❌ Error during upload: {e}")
 
-def save_restart_state(path, i, j, k, chunk_number):
+def save_restart_state(path, i, j, chunk_number):
     """Saves the current loop indices and chunk number to a JSON file."""
-    state = {'i': i, 'j': j, 'k': k, 'chunk_number': chunk_number}
+    state = {'i': i, 'j': j, 'chunk_number': chunk_number}
     with open(path, 'w') as f:
         json.dump(state, f, indent=4)
-    print(f"\n✅ Simulation state saved to {path} at indices (i={i}, j={j}, k={k}), chunk={chunk_number}.")
+    print(f"\n✅ Simulation state saved to {path} at indices (i={i}, j={j}), chunk={chunk_number}.")
 
 def load_restart_state(path):
-    """Loads loop indices and chunk number from a JSON file. Returns (0, 0, 0, 1) if not found or invalid."""
+    """Loads loop indices and chunk number from a JSON file. Returns (0, 0, 1) if not found or invalid."""
     if not os.path.exists(path):
         print("ℹ️ Restart file not found. Starting a fresh simulation.")
-        return 0, 0, 0, 1
+        return 0, 0, 1
     try:
         with open(path, 'r') as f:
             state = json.load(f)
             i = state.get('i', 0)
             j = state.get('j', 0)
-            k = state.get('k', 0)
             chunk_number = state.get('chunk_number', 1)
-            print(f"✅ Restart file found. Resuming simulation from indices (i={i}, j={j}, k={k+1}), chunk={chunk_number}.")
-            return i, j, k, chunk_number
+            print(f"✅ Restart file found. Resuming simulation from indices (i={i}, j={j}), chunk={chunk_number}.")
+            return i, j, chunk_number
     except (json.JSONDecodeError, KeyError) as e:
         print(f"⚠️ Could not read restart file: {e}. Starting a fresh simulation.")
-        return 0, 0, 0, 1
+        return 0, 0, 1
 
 def get_csv_filename(chunk_number):
     """Returns the appropriate CSV filename for the given chunk number."""
@@ -111,6 +121,19 @@ def save_to_csv(df, chunk_number):
         combined_df = pd.concat([old_df, df], ignore_index=True)
         combined_df.to_csv(csv_file, index=False)
         print(f"✅ Appended to existing CSV file: {csv_file}")
+
+def write_to_csv(df, chunk_number):
+    csv_file = get_csv_filename(chunk_number)
+
+    if not os.path.exists(csv_file):
+        with open(csv_file, 'w') as f:
+            writer = csv.writer(f)
+            columns = df.columns.tolist()
+            writer.writerow(columns)
+
+    with open(csv_file, 'a') as f:
+        writer = csv.writer(f)
+        writer.writerow(df.iloc[0].values.tolist())
 
 def calculate_chunk_number(iteration_count):
     """Calculate which chunk number based on iteration count."""
@@ -202,7 +225,7 @@ def rms_extract(model_ver, model_path, constraint):
         raise ValueError("No line with 'chi2' found in the file.")
 
     chi2_value = float(chi2_line.split('=')[-1].strip().split()[0])
-    print(f"✅ Extracted chi2 value: {chi2_value}")
+    # print(f"✅ Extracted chi2 value: {chi2_value}")
 
     # Number of len profiles
     num_lens_profiles = len(lens_params_dict)
@@ -366,7 +389,7 @@ def rms_extract(model_ver, model_path, constraint):
     
     # Anomaly Calculation
     columnn_names = ['x', 'y', 'mag', 'pos_err', 'mag_err', '1', '2', '3']
-    obs_point = pd.read_csv('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/System 2/pos+flux_point.dat', delim_whitespace=True, header=None, skiprows=1, names=columnn_names)
+    obs_point = pd.read_csv('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS+FLUX).dat', delim_whitespace=True, header=None, skiprows=1, names=columnn_names)
     out_point = pd.read_csv(model_path + '/' + model_ver + '_point.dat', delim_whitespace=True, header=None, skiprows=1, names=columnn_names)
     out_point.drop(columns=['mag_err', '1', '2', '3'], inplace=True)
 
@@ -386,20 +409,19 @@ def rms_extract(model_ver, model_path, constraint):
     return pos_rms, mag_rms, dfs, chi2_value
 
 # ==== Main ====
-total_iterations = len(m) * len(n) * len(o)
+total_iterations = len(m) * len(n)
 print(f"Total iterations: {total_iterations}")
 
 # Load the state from where we left off
-start_i, start_j, start_k, chunk_number = load_restart_state(restart_file_path)
+start_i, start_j, chunk_number = load_restart_state(restart_file_path)
 
 # Calculate the number of iterations already completed to set the progress bar correctly
-iterations_done = start_i * len(n) * len(o) + start_j * len(o) + start_k
+iterations_done = start_i * len(n) + start_j
 iteration_count = iterations_done
 
 # Adjust for the very first run
-if not (start_i == 0 and start_j == 0 and start_k == 0):
-    # The saved 'k' is the last one *completed*, so we start the next loop at k+1
-    start_k += 1
+if not (start_i == 0 and start_j == 0):
+    # When resuming, increment the iteration count since we're starting at the next j value
     iteration_count += 1
 
 initial_size = get_dir_size(model_output_dir)
@@ -416,190 +438,191 @@ except FileNotFoundError:
     last_disk_used_percent = 0
     last_disk_free_bytes = 0
 
+start_time = time.time()
+
 # ==== Main Loop ====
-pbar = None
+# pbar = None
 try:
-    with tqdm(total=total_iterations, desc="Processing", initial=iterations_done) as pbar:
-        for i in range(start_i, len(m)):
-            # On the first resumed 'i', start 'j' from its saved state. For all subsequent 'i's, start 'j' from 0.
-            j_start_index = start_j if i == start_i else 0
-            for j in range(j_start_index, len(n)):
-                # On the first resumed 'i' and 'j', start 'k' from its saved state. Otherwise, start 'k' from 0.
-                k_start_index = start_k if i == start_i and j == start_j else 0
-                for k in range(k_start_index, len(o)):
+    # with tqdm(total=total_iterations, desc="Processing", initial=iterations_done) as pbar:
+    for i in range(start_i, len(m)):
+        # On the first resumed 'i', start 'j' from its saved state. For all subsequent 'i's, start 'j' from 0.
+        j_start_index = start_j if i == start_i else 0
+        for j in range(j_start_index, len(n)):
+            # On the first resumed 'i' and 'j', start 'k' from its saved state. Otherwise, start 'k' from 0.
+                # Flush terminal every 500 iterations
+                if iteration_count > 0 and iteration_count % 500 == 0:
+                    clear_terminal()
+                    time.sleep(0.5)  # Give terminal time to clear
 
-                    # Flush terminal every 500 iterations
-                    if iteration_count > 0 and iteration_count % 500 == 0:
-                        print('\033[2J\033[H') # ANSI escape sequence to clear screen
+                # --- This is the start of your original loop body ---
+                model_name = f'POW_POS_MPOLE_{m[i]}_{n[j]}'
+                model_path = os.path.join(model_output_dir, model_name)
 
-                    # --- This is the start of your original loop body ---
-                    model_name = f'SIE_POS_SHEAR_{m[i]}_{n[j]}_{o[k]}'
-                    model_path = os.path.join(model_output_dir, model_name)
+                print(f"\nProcessing Iteration = {iteration_count + 1} of {total_iterations} | Indices(i={i}, j={j})")
 
-                    print(f"\nProcessing Iteration = {iteration_count + 1} of {total_iterations} | Indices(i={i}, j={j}, k={k})")
+                # --- Model Generation ---
+                glafic.init(0.3, 0.7, -1.0, 0.7, model_path, 20.0, 20.0, 21.56, 21.56, 0.01, 0.01, 1, verb=0)
+                glafic.set_secondary('chi2_splane 1', verb=0)
+                glafic.set_secondary('chi2_checknimg 0', verb=0)
+                glafic.set_secondary('chi2_restart   -1', verb=0)
+                glafic.set_secondary('chi2_usemag    1', verb=0)
+                glafic.set_secondary('hvary          0', verb=0)
+                glafic.set_secondary('ran_seed -122000', verb=0)
+                glafic.startup_setnum(2, 0, 1)
+                glafic.set_lens(1, 'pow', 0.261343256161012, 1.0, 20.78, 20.78, 0.107, 23.38, 0.46, 2.1)
+                glafic.set_lens(2, 'mpole', 0.261343256161012, 1.0, 20.78, 20.78, m[i], n[j], 4.0, 1.0)
+                glafic.set_point(1, 1.0, 20.78, 20.78)
+                glafic.setopt_lens(1, 0, 0, 1, 1, 1, 1, 1, 1)
+                glafic.setopt_lens(2, 0, 0, 1, 1, 0, 0, 0, 1)
+                glafic.setopt_point(1, 0, 1, 1)
+                glafic.model_init(verb=0)
+                glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS).dat')
+                glafic.parprior('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/MPOLE/priorfile.dat')
+                glafic.optimize()
+                glafic.findimg()
+                # glafic.writecrit(1.0)
+                # glafic.writelens(1.0)
+                glafic.quit()
 
-                    # --- Model Generation ---
-                    glafic.init(0.3, 0.7, -1.0, 0.7, model_path, -3.0, -3.0, 3.0, 3.0, 0.01, 0.01, 1, verb=0)
-                    glafic.set_secondary('chi2_splane 1', verb=0)
-                    glafic.set_secondary('chi2_checknimg 0', verb=0)
-                    glafic.set_secondary('chi2_restart   -1', verb=0)
-                    glafic.set_secondary('chi2_usemag    1', verb=0)
-                    glafic.set_secondary('hvary          0', verb=0)
-                    glafic.set_secondary('ran_seed -122000', verb=0)
-                    glafic.startup_setnum(2, 0, 1)
-                    glafic.set_lens(1, 'sie', 0.261343256161012, 1.563051e+02, 0.0, 0.0, 2.168966e-01, -1.398259e+00,  0.0, 0.0)
-                    glafic.set_lens(2, 'pert', 0.261343256161012, 1.0, 0.0, 0.0, m[i], n[j], 0.0, o[k])
-                    glafic.set_point(1, 1.0, 0.0, 0.0)
-                    glafic.setopt_lens(1, 0, 1, 1, 1, 1, 1, 0, 0)
-                    glafic.setopt_lens(2, 0, 0, 0, 0, 1, 1, 0, 1)
-                    glafic.setopt_point(1, 0, 1, 1)
-                    glafic.model_init(verb=0)
-                    glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/System 2/pos_point.dat')
-                    # glafic.parprior('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/System 2/priorfile.dat')
-                    glafic.optimize()
-                    glafic.findimg()
-                    glafic.writecrit(1.0)
-                    glafic.writelens(1.0)
-                    glafic.quit()
+                columns = ['x', 'y', 'm', 'm_err']
 
-                    columns = ['x', 'y', 'm', 'm_err']
+                macro_model_params = model_name.strip().split('_')[0]
+                macro_columns = model_params[macro_model_params]
 
-                    macro_model_params = model_name.strip().split('_')[0]
-                    macro_columns = model_params[macro_model_params]
+                df = pd.DataFrame(columns=['strength', 'pa', 'num_images', 'pos_rms', 'mag_rms', 't_mpole_str', 't_mpole_pa', 'chi2'] + macro_columns)
 
-                    df = pd.DataFrame(columns=['strength', 'pa', 'kappa', 'num_images', 'pos_rms', 'mag_rms', 't_shear_str', 't_shear_pa', 't_shear_kappa', 'chi2'] + macro_columns)
+                model_ver = model_name
+                model_path_0 = model_output_dir
 
-                    model_ver = model_name
-                    model_path_0 = model_output_dir
+                if 'POS+FLUX' in model_ver:
+                    constraint = 'pos_flux'
+                elif 'POS' in model_ver:
+                    constraint = 'pos'
 
-                    if 'POS+FLUX' in model_ver:
-                        constraint = 'pos_flux'
-                    elif 'POS' in model_ver:
-                        constraint = 'pos'
+                pos_rms, mag_rms, dfs, chi2 = rms_extract(model_ver, model_path_0, constraint)
 
-                    pos_rms, mag_rms, dfs, chi2 = rms_extract(model_ver, model_path_0, constraint)
+                file_name = model_path + '_point.dat'
 
-                    file_name = model_path + '_point.dat'
+                # Calculate current chunk number based on iteration count
+                current_chunk = calculate_chunk_number(iteration_count + 1)
 
-                    # Calculate current chunk number based on iteration count
-                    current_chunk = calculate_chunk_number(iteration_count + 1)
-
-                    if os.path.exists(file_name):
-                        data = pd.read_csv(file_name, delim_whitespace=True, skiprows=1, header=None, names=columns)
-                        num_images = len(data)
-                        
-                        # Create the result dataframe
+                if os.path.exists(file_name):
+                    data = pd.read_csv(file_name, delim_whitespace=True, skiprows=1, header=None, names=columns)
+                    num_images = len(data)
+                    
+                    # Create the result dataframe
+                    result_df = pd.DataFrame({
+                        'strength': [m[i]],
+                        'pa': [n[j]],
+                        'num_images': [num_images],
+                        'pos_rms': [pos_rms],
+                        'mag_rms': [mag_rms],
+                        't_mpole_str': [dfs[1]['$\epsilon$'][1]],
+                        't_mpole_pa': [dfs[1]['$θ_{m}$'][1]],
+                        'chi2': [chi2],
+                        **{col: [dfs[0][col][1]] for col in macro_columns}
+                    })
+                    
+                    if data.empty:
+                        print(f"File {file_name} is empty.")
+                        # Override with zeros for empty data
                         result_df = pd.DataFrame({
                             'strength': [m[i]],
                             'pa': [n[j]],
-                            'kappa': [o[k]],
-                            'num_images': [num_images],
-                            'pos_rms': [pos_rms],
-                            'mag_rms': [mag_rms],
-                            't_shear_str': [dfs[1]['$\gamma$'][1]],
-                            't_shear_pa': [dfs[1]['$θ_{\gamma}$'][1]],
-                            't_shear_kappa': [dfs[1]['$\kappa$'][1]],
-                            'chi2': [chi2],
-                            **{col: [dfs[0][col][1]] for col in macro_columns}
+                            'num_images': [0],
+                            'pos_rms': [0],
+                            'mag_rms': [0], 
+                            't_mpole_str': [0],
+                            't_mpole_pa': [0],
+                            'chi2': [0],
+                            **{col: [0] for col in macro_columns}
                         })
+                    # else:
+                    #     print(f"File {file_name} exists and is not empty.")
                         
-                        if data.empty:
-                            print(f"File {file_name} is empty.")
-                            # Override with zeros for empty data
-                            result_df = pd.DataFrame({
-                                'strength': [m[i]],
-                                'pa': [n[j]],
-                                'kappa': [o[k]],
-                                'num_images': [0],
-                                'pos_rms': [0],
-                                'mag_rms': [0], 
-                                't_shear_str': [0],
-                                't_shear_pa': [0],
-                                't_shear_kappa': [0],
-                                'chi2': [0],
-                                **{col: [0] for col in macro_columns}
-                            })
-                        else:
-                            print(f"File {file_name} exists and is not empty.")
-                            
-                        # Save to the appropriate CSV chunk
-                        save_to_csv(result_df, current_chunk)
-                        
-                        # Delete generated files to save space (only if data is not empty)
-                        # Define Files 
-                        print(f"Deleting files for model: {model_name}")
-                        crit_file = model_path + '_crit.dat'  
-                        lens_file = model_path + '_lens.fits'
-                        point_file = model_path + '_point.dat'
-                        opt_file = model_path + '_optresult.dat'
+                    # Save to the appropriate CSV chunk
+                    write_to_csv(result_df, current_chunk)
+                    
+                    # Delete generated files to save space (only if data is not empty)
+                    # Define Files 
+                    # print(f"Deleting files for model: {model_name}")
+                    # crit_file = model_path + '_crit.dat'  
+                    # lens_file = model_path + '_lens.fits'
+                    point_file = model_path + '_point.dat'
+                    opt_file = model_path + '_optresult.dat'
 
-                        # Delete Files
-                        for file_to_delete in [crit_file, lens_file, point_file, opt_file]:
-                            if os.path.exists(file_to_delete):
-                                os.remove(file_to_delete)
-                                    
+                    # Delete Files
+                    for file_to_delete in [point_file, opt_file]: # add crit_file and lens_file
+                        if os.path.exists(file_to_delete):
+                            os.remove(file_to_delete)
+                                
+                else:
+                    print(f"File {file_name} does not exist.")
+
+                iteration_count += 1
+                # pbar.update(1)
+
+                # Update chunk number if we've moved to a new chunk
+                chunk_number = calculate_chunk_number(iteration_count)
+
+                # --- Update RAM and Disk Threat Every N Iterations ---
+                if iteration_count % disk_check_interval == 0:
+                    size_now = get_dir_size(model_output_dir)
+                    # Avoid division by zero if starting from a resumed state
+                    models_generated_this_run = iteration_count - iterations_done
+                    if models_generated_this_run > 0:
+                        size_diff = size_now - initial_size
+                        avg_model_size = size_diff / models_generated_this_run
                     else:
-                        print(f"File {file_name} does not exist.")
+                        avg_model_size = 0 # Cannot calculate average yet
 
-                    iteration_count += 1
-                    pbar.update(1)
+                    models_remaining = total_iterations - iteration_count
+                    last_ram_usage = get_memory_usage()
+                    last_threat = get_disk_threat_assessment(model_output_dir, avg_model_size, models_remaining)
 
-                    # Update chunk number if we've moved to a new chunk
-                    chunk_number = calculate_chunk_number(iteration_count)
+                    try:
+                        total, used, free = shutil.disk_usage(model_output_dir)
+                        disk_used_percent = 100 * used / total
+                        last_disk_used_percent = disk_used_percent
+                        last_disk_free_bytes = free
+                    except FileNotFoundError:
+                        disk_used_percent = 0
 
-                    # --- Update RAM and Disk Threat Every N Iterations ---
-                    if iteration_count % disk_check_interval == 0:
-                        size_now = get_dir_size(model_output_dir)
-                        # Avoid division by zero if starting from a resumed state
-                        models_generated_this_run = iteration_count - iterations_done
-                        if models_generated_this_run > 0:
-                            size_diff = size_now - initial_size
-                            avg_model_size = size_diff / models_generated_this_run
-                        else:
-                            avg_model_size = 0 # Cannot calculate average yet
+                    # print(f"🧠 Disk Threat: {last_threat} | Used: {disk_used_percent:.2f}% | RAM: {last_ram_usage:.1f}%")
 
-                        models_remaining = total_iterations - iteration_count
-                        last_ram_usage = get_memory_usage()
-                        last_threat = get_disk_threat_assessment(model_output_dir, avg_model_size, models_remaining)
+                # --- Save Simulation Progress Info ---
+                percentage_complete = (iteration_count / total_iterations) * 100
+                # Use pbar's internal stats for better ETA
+                elapsed_time = time.time() - start_time if 'start_time' in locals() else 0
+                avg_time_per_iteration = elapsed_time / (iteration_count - iterations_done) if iteration_count > iterations_done else 0
+                approx_time_remaining = (total_iterations - iteration_count) * avg_time_per_iteration
+                last_cpu_usage = get_cpu_usage()
 
-                        try:
-                            total, used, free = shutil.disk_usage(model_output_dir)
-                            disk_used_percent = 100 * used / total
-                            last_disk_used_percent = disk_used_percent
-                            last_disk_free_bytes = free
-                        except FileNotFoundError:
-                            disk_used_percent = 0
+                progress_info = {
+                    'current_iteration': iteration_count,
+                    'total_iterations': total_iterations,
+                    'percentage_complete': percentage_complete,
+                    'avg_time_per_iteration': avg_time_per_iteration,
+                    'approx_time_remaining': approx_time_remaining,
+                    'ram_usage_percent': last_ram_usage,
+                    'disk_threat_level': last_threat,
+                    'cpu_usage_percent': last_cpu_usage,
+                    'disk_used_percent': last_disk_used_percent,
+                    'disk_free': round(last_disk_free_bytes / (1024 ** 3), 2),
+                    'current_chunk': chunk_number
+                }
 
-                        print(f"🧠 Disk Threat: {last_threat} | Used: {disk_used_percent:.2f}% | RAM: {last_ram_usage:.1f}%")
+                with open(log_file_path, 'w') as log_file: # Changed to 'w' to overwrite log each time
+                    log_file.write(f"Iteration {iteration_count}/{total_iterations}: {progress_info}\n")
+                
+                if last_ram_usage > ram_threshold_percent:
+                    time.sleep(10)
 
-                    # --- Save Simulation Progress Info ---
-                    percentage_complete = (iteration_count / total_iterations) * 100
-                    # Use pbar's internal stats for better ETA
-                    avg_time_per_iteration = pbar.format_dict['elapsed'] / pbar.n if pbar.n > 0 else 0
-                    approx_time_remaining = (total_iterations - iteration_count) * avg_time_per_iteration
+                if iteration_count % 1000 == 0:
+                    upload_to_replit(log_file_path)
 
-                    progress_info = {
-                        'current_iteration': iteration_count,
-                        'total_iterations': total_iterations,
-                        'percentage_complete': percentage_complete,
-                        'avg_time_per_iteration': avg_time_per_iteration,
-                        'approx_time_remaining': approx_time_remaining,
-                        'ram_usage_percent': last_ram_usage,
-                        'disk_threat_level': last_threat,
-                        'disk_used_percent': last_disk_used_percent,
-                        'disk_free': round(last_disk_free_bytes / (1024 ** 3), 2),
-                        'current_chunk': chunk_number
-                    }
-
-                    with open(log_file_path, 'w') as log_file: # Changed to 'w' to overwrite log each time
-                        log_file.write(f"Iteration {iteration_count}/{total_iterations}: {progress_info}\n")
-
-                    if iteration_count % 100 == 0:
-                        upload_to_replit(log_file_path)
-
-                # Reset inner loop start indices for the next outer loop iteration
-                start_k = 0
-            start_j = 0
+            # Reset inner loop start indices for the next outer loop iteration
+        start_j = 0
 
     # If loop completes successfully, clean up the restart file
     print("\n🎉 Simulation completed successfully!")
@@ -609,67 +632,49 @@ try:
 
 except KeyboardInterrupt:
     print("\n⚠️ Simulation interrupted by user (Ctrl+C)")
-    # Save the state of the last completed iteration
-    if 'i' in locals() and 'j' in locals() and 'k' in locals():
-        # We need to save the state of the last completed iteration
-        # Since we increment iteration_count after processing, we need to adjust
+    if 'i' in locals() and 'j' in locals():
         if iteration_count > iterations_done:
-            # We completed at least one iteration, so save the previous k
-            save_k = k - 1 if k > 0 else (len(o) - 1 if j > j_start_index else k)
-            save_j = j if k > 0 else (j - 1 if j > j_start_index else j)
-            save_i = i if (k > 0 or j > j_start_index) else i
-            
-            # Handle wrap-around cases
-            if save_k < 0:
-                save_k = len(o) - 1
-                save_j = save_j - 1 if save_j > 0 else save_j
-            if save_j < 0:
-                save_j = len(n) - 1  
-                save_i = save_i - 1 if save_i > 0 else save_i
-                
-            save_restart_state(restart_file_path, save_i, save_j, save_k, chunk_number)
+            save_j = j - 1 if j > j_start_index else j
+            save_i = i if j > j_start_index else i
+            save_restart_state(restart_file_path, save_i, save_j, chunk_number)
         else:
-            # No iterations completed, save the starting state
-            save_restart_state(restart_file_path, start_i, start_j, start_k, chunk_number)
+            save_restart_state(restart_file_path, start_i, start_j, chunk_number)
     else:
         print("⚠️ Could not determine current state for restart file")
 
 except Exception as e:
     print(f"\n❌ Simulation failed with error: {e}")
     # Save the state of the last completed iteration
-    if 'i' in locals() and 'j' in locals() and 'k' in locals():
+    if 'i' in locals() and 'j' in locals():
         if iteration_count > iterations_done:
-            # We completed at least one iteration, so save the previous k
-            save_k = k - 1 if k > 0 else (len(o) - 1 if j > j_start_index else k)
-            save_j = j if k > 0 else (j - 1 if j > j_start_index else j)
-            save_i = i if (k > 0 or j > j_start_index) else i
+            # We completed at least one iteration, so save the previous state
+            save_j = j - 1 if j > j_start_index else j
+            save_i = i if j > j_start_index else i
             
             # Handle wrap-around cases
-            if save_k < 0:
-                save_k = len(o) - 1
-                save_j = save_j - 1 if save_j > 0 else save_j
             if save_j < 0:
                 save_j = len(n) - 1  
                 save_i = save_i - 1 if save_i > 0 else save_i
                 
-            save_restart_state(restart_file_path, save_i, save_j, save_k, chunk_number)
+            save_restart_state(restart_file_path, save_i, save_j, chunk_number)
         else:
             # No iterations completed, save the starting state
-            save_restart_state(restart_file_path, start_i, start_j, start_k, chunk_number)
+            save_restart_state(restart_file_path, start_i, start_j, chunk_number)
     else:
-        print("⚠️ Could not determine current state for restart file")
+        print("Could not determine current state for restart file")
     raise  # Re-raise the exception for debugging
 
-finally:
-    if pbar is not None:
-        pbar.close()
+# finally:
+#     if pbar is not None:
+#         pbar.close()
 
 # Print summary of created CSV files
-print("\n📊 CSV Summary:")
-for chunk_num in range(1, chunk_number + 1):
-    csv_file = get_csv_filename(chunk_num)
-    if os.path.exists(csv_file):
-        df_size = len(pd.read_csv(csv_file))
-        print(f"  {csv_file}: {df_size} rows")
-    else:
-        print(f"  {csv_file}: Not found")
+# print("\n📊 CSV Summary:")
+# for chunk_num in range(1, chunk_number + 1):
+#     csv_file = get_csv_filename(chunk_num)
+#     if os.path.exists(csv_file):
+#         df_size = len(pd.read_csv(csv_file))
+#         print(f"  {csv_file}: {df_size} rows")
+#     else:
+#         print(f"  {csv_file}: Not found")
+
