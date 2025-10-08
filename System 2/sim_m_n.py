@@ -17,15 +17,15 @@ sys.stdout = open(os.devnull, 'w')
 sys.stderr = open(os.devnull, 'w')  # if needed
 
 # ==== Config ====
-m = [round(x, 5) for x in np.linspace(0.001, 0.1, 1000)]
-n = [round(x, 5) for x in np.linspace(0, 360, 1000)]
+m = [round(x, 5) for x in np.linspace(0.001, 0.1, 100)]
+n = [round(x, 5) for x in np.linspace(0, 360, 10)]
 
 ram_threshold_percent = 90
 disk_check_interval = 10000
 critical_disk_usage_percent = 90
 CHUNK_SIZE = 100000  # Save to new CSV every 10,000 iterations
 
-model_output_dir = '/Volumes/T7 Shield/Sim 14'
+model_output_dir = '/Volumes/T7 Shield/Sim 18'
 log_file_path = '/Users/ainsleylewis/Documents/Astronomy/Discord Bot/simulation_log.txt'
 
 restart_file_path = os.path.join(os.path.dirname(log_file_path), 'simulation_restart_state.json')
@@ -389,7 +389,7 @@ def rms_extract(model_ver, model_path, constraint):
     
     # Anomaly Calculation
     columnn_names = ['x', 'y', 'mag', 'pos_err', 'mag_err', '1', '2', '3']
-    obs_point = pd.read_csv('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS+FLUX).dat', delim_whitespace=True, header=None, skiprows=1, names=columnn_names)
+    obs_point = pd.read_csv('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/System 2/pos+flux_point.dat', delim_whitespace=True, header=None, skiprows=1, names=columnn_names)
     out_point = pd.read_csv(model_path + '/' + model_ver + '_point.dat', delim_whitespace=True, header=None, skiprows=1, names=columnn_names)
     out_point.drop(columns=['mag_err', '1', '2', '3'], inplace=True)
 
@@ -455,13 +455,13 @@ try:
                     time.sleep(0.5)  # Give terminal time to clear
 
                 # --- This is the start of your original loop body ---
-                model_name = f'POW_POS_MPOLE_{m[i]}_{n[j]}'
+                model_name = f'SIE_POS_SHEAR_{m[i]}_{n[j]}'
                 model_path = os.path.join(model_output_dir, model_name)
 
                 print(f"\nProcessing Iteration = {iteration_count + 1} of {total_iterations} | Indices(i={i}, j={j})")
 
                 # --- Model Generation ---
-                glafic.init(0.3, 0.7, -1.0, 0.7, model_path, 20.0, 20.0, 21.56, 21.56, 0.01, 0.01, 1, verb=0)
+                glafic.init(0.3, 0.7, -1.0, 0.7, model_path, -3.0, -3.0, 3.0, 3.0, 0.01, 0.01, 1, verb=0)
                 glafic.set_secondary('chi2_splane 1', verb=0)
                 glafic.set_secondary('chi2_checknimg 0', verb=0)
                 glafic.set_secondary('chi2_restart   -1', verb=0)
@@ -469,15 +469,15 @@ try:
                 glafic.set_secondary('hvary          0', verb=0)
                 glafic.set_secondary('ran_seed -122000', verb=0)
                 glafic.startup_setnum(2, 0, 1)
-                glafic.set_lens(1, 'pow', 0.261343256161012, 1.0, 20.78, 20.78, 0.107, 23.38, 0.46, 2.1)
-                glafic.set_lens(2, 'mpole', 0.261343256161012, 1.0, 20.78, 20.78, m[i], n[j], 4.0, 1.0)
-                glafic.set_point(1, 1.0, 20.78, 20.78)
-                glafic.setopt_lens(1, 0, 0, 1, 1, 1, 1, 1, 1)
-                glafic.setopt_lens(2, 0, 0, 1, 1, 0, 0, 0, 1)
+                glafic.set_lens(1, 'sie', 0.261343256161012, 1.563051e+02, 0.0, 0.0, 2.168966e-01, -1.398259e+00,  0.0, 0.0)
+                glafic.set_lens(2, 'pert', 0.261343256161012, 1.0, 0.0, 0.0, m[i], n[j], 0.0, 0.0)
+                glafic.set_point(1, 1.0, 0.0, 0.0)
+                glafic.setopt_lens(1, 0, 0, 1, 1, 1, 1, 0, 0)
+                glafic.setopt_lens(2, 0, 0, 0, 0, 1, 1, 0, 0)
                 glafic.setopt_point(1, 0, 1, 1)
                 glafic.model_init(verb=0)
-                glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/obs_point/obs_point_(POS).dat')
-                glafic.parprior('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/MPOLE/priorfile.dat')
+                glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/System 2/pos_point.dat')
+                # glafic.parprior('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/System 2/priorfile.dat')
                 glafic.optimize()
                 glafic.findimg()
                 # glafic.writecrit(1.0)
