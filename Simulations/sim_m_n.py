@@ -13,6 +13,8 @@ import re
 import sys
 import csv
 import subprocess
+import multiprocessing
+import time
 
 # === Num of CPUs ===
 available_cpus = psutil.cpu_count(logical=False)
@@ -281,24 +283,44 @@ def run_glafic_for_processor(proc_id):
     if not os.path.exists(values):
         print(f"File not found: {values}")
         return
-    with open(values, "r") as f:
-        m_values = [float(line.strip(",")[0]) for line in f if line.strip()]
-        n_values = [float(line.strip().split(",")[1]) for line in f if line.strip()]
+    with open(values, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        m_values = []
+        n_values = []
+
+        # If header contains 'm' and 'n', use DictReader
+        fieldnames = [fn.strip().lower() for fn in reader.fieldnames] if reader.fieldnames else []
+        if 'm' in fieldnames and 'n' in fieldnames:
+            for row in reader:
+                if not row:
+                    continue
+                try:
+                    m_values.append(float(row['m']))
+                    n_values.append(float(row['n']))
+                except (ValueError, KeyError):
+                    continue
+        
+        print(m_values, n_values)
 
     # Read the original GLAFIC script template once
-    with open(glafic_script, "w") as f:
-        base_script = f.read()
+    with open(glafic_script, "r") as rf:
+        base_script = rf.read()
 
+    with open(glafic_script, "w") as f:
         # Replace placeholders with actual values
         for m_value, n_value in zip(m_values, n_values):
             model_path = f"{storage_path}/processor_{proc_id}/model_m_{m_value:.5g}_n_{n_value:.5g}"
-            modified_script = base_script.replace("m", f"{m_value:.12g}").replace("n", f"{n_value:.12g}").replace("path", f"'{model_path}'")
-            f.write(modified_script + "\n\n")  # Separate different runs
+            modified_script = base_script.replace("m_value", f"{m_value:.12g}").replace("n_value", f"{n_value:.12g}").replace("path", f"'{model_path}'")
+            f.write(modified_script + "\n\n")
+            print("sleeping")
+            time.sleep(10)  # Small delay to ensure file write completion
+            print("done sleeping")
+
 
             # Run GLAFIC using the modified script directly via Python -c
-            subprocess.run(["python3", "-c", modified_script], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            # subprocess.run(["python3", "-c", modified_script], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-            
+
 
     print(f"Processor {proc_id}: Completed all models.")
 
@@ -382,3 +404,17 @@ for proc in range(num_cpus):
             f.write('m,n\n')
 
     print(f'Wrote {len(pairs)} (m,n) pairs to {out_dir}')
+
+def main():
+    num_processors = 4  # Adjust as needed
+    with multiprocessing.Pool(processes=num_processors) as pool:
+        pool.map(run_glafic_for_processor, range(num_processors))
+    print("✅ All processes completed.")
+
+
+if __name__ == "__main__":
+    multiprocessing.set_start_method("spawn", force=True)
+    start = time.time()
+    main()
+    end = time.time()
+    print(f"Total execution time: {end - start:.2f} seconds")
