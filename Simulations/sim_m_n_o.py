@@ -7,25 +7,29 @@ import shutil
 import os
 import time
 import requests
-import json  # ### NEW ### - For handling the restart file
+import json
 import pandas as pd
 import re
 import sys
 import csv
 
+
 sys.stdout = open(os.devnull, 'w')
 sys.stderr = open(os.devnull, 'w')  # if needed
 
+start_time = time.time()
+
 # ==== Config ====
-m = [round(x, 5) for x in np.linspace(0.001, 0.1, 100)]
+m = [round(x, 5) for x in np.linspace(0.001, 0.1, 10)]
 n = [round(x, 5) for x in np.linspace(0, 360, 10)]
+o = [round(x, 5) for x in np.linspace(0, 1, 10)] # ### NEW ### - Third variable
 
 ram_threshold_percent = 90
 disk_check_interval = 10000
 critical_disk_usage_percent = 90
-CHUNK_SIZE = 100000  # Save to new CSV every 10,000 iterations
+CHUNK_SIZE = 100000  # Save to new CSV every 100,000 iterations
 
-model_output_dir = '/Volumes/T7 Shield/Sim 18'
+model_output_dir = '/Volumes/T7 Shield/Sim 22'
 log_file_path = '/Users/ainsleylewis/Documents/Astronomy/Discord Bot/simulation_log.txt'
 
 restart_file_path = os.path.join(os.path.dirname(log_file_path), 'simulation_restart_state.json')
@@ -76,29 +80,30 @@ def upload_to_replit(log_path: str, replit_url: str = "https://fd07c8f5-4e98-4ab
     except Exception as e:
         print(f"❌ Error during upload: {e}")
 
-def save_restart_state(path, i, j, chunk_number):
+def save_restart_state(path, i, j, k, chunk_number):
     """Saves the current loop indices and chunk number to a JSON file."""
-    state = {'i': i, 'j': j, 'chunk_number': chunk_number}
+    state = {'i': i, 'j': j, 'k': k, 'chunk_number': chunk_number}
     with open(path, 'w') as f:
         json.dump(state, f, indent=4)
-    print(f"\n✅ Simulation state saved to {path} at indices (i={i}, j={j}), chunk={chunk_number}.")
+    print(f"\n✅ Simulation state saved to {path} at indices (i={i}, j={j}, k={k}), chunk={chunk_number}.")
 
 def load_restart_state(path):
-    """Loads loop indices and chunk number from a JSON file. Returns (0, 0, 1) if not found or invalid."""
+    """Loads loop indices and chunk number from a JSON file. Returns (0, 0, 0, 1) if not found or invalid."""
     if not os.path.exists(path):
         print("ℹ️ Restart file not found. Starting a fresh simulation.")
-        return 0, 0, 1
+        return 0, 0, 0, 1
     try:
         with open(path, 'r') as f:
             state = json.load(f)
             i = state.get('i', 0)
             j = state.get('j', 0)
+            k = state.get('k', 0)
             chunk_number = state.get('chunk_number', 1)
-            print(f"✅ Restart file found. Resuming simulation from indices (i={i}, j={j}), chunk={chunk_number}.")
-            return i, j, chunk_number
+            print(f"✅ Restart file found. Resuming simulation from indices (i={i}, j={j}, k={k}), chunk={chunk_number}.")
+            return i, j, k, chunk_number
     except (json.JSONDecodeError, KeyError) as e:
         print(f"⚠️ Could not read restart file: {e}. Starting a fresh simulation.")
-        return 0, 0, 1
+        return 0, 0, 0, 1
 
 def get_csv_filename(chunk_number):
     """Returns the appropriate CSV filename for the given chunk number."""
@@ -409,19 +414,19 @@ def rms_extract(model_ver, model_path, constraint):
     return pos_rms, mag_rms, dfs, chi2_value
 
 # ==== Main ====
-total_iterations = len(m) * len(n)
+total_iterations = len(m) * len(n) * len(o)
 print(f"Total iterations: {total_iterations}")
 
 # Load the state from where we left off
-start_i, start_j, chunk_number = load_restart_state(restart_file_path)
+start_i, start_j, start_k, chunk_number = load_restart_state(restart_file_path)
 
 # Calculate the number of iterations already completed to set the progress bar correctly
-iterations_done = start_i * len(n) + start_j
+iterations_done = start_i * len(n) * len(o) + start_j * len(o) + start_k
 iteration_count = iterations_done
 
 # Adjust for the very first run
-if not (start_i == 0 and start_j == 0):
-    # When resuming, increment the iteration count since we're starting at the next j value
+if not (start_i == 0 and start_j == 0 and start_k == 0):
+    # When resuming, increment the iteration count since we're starting at the next k value
     iteration_count += 1
 
 initial_size = get_dir_size(model_output_dir)
@@ -449,16 +454,18 @@ try:
         j_start_index = start_j if i == start_i else 0
         for j in range(j_start_index, len(n)):
             # On the first resumed 'i' and 'j', start 'k' from its saved state. Otherwise, start 'k' from 0.
+            k_start_index = start_k if (i == start_i and j == start_j) else 0
+            for k in range(k_start_index, len(o)):
                 # Flush terminal every 500 iterations
                 if iteration_count > 0 and iteration_count % 500 == 0:
                     clear_terminal()
                     time.sleep(0.5)  # Give terminal time to clear
 
                 # --- This is the start of your original loop body ---
-                model_name = f'SIE_POS_SHEAR_{m[i]}_{n[j]}'
+                model_name = f'SIE_POS_SHEAR_{m[i]}_{n[j]}_{o[k]}'
                 model_path = os.path.join(model_output_dir, model_name)
 
-                print(f"\nProcessing Iteration = {iteration_count + 1} of {total_iterations} | Indices(i={i}, j={j})")
+                print(f"\nProcessing Iteration = {iteration_count + 1} of {total_iterations} | Indices(i={i}, j={j}, k={k})")
 
                 # --- Model Generation ---
                 glafic.init(0.3, 0.7, -1.0, 0.7, model_path, -3.0, -3.0, 3.0, 3.0, 0.01, 0.01, 1, verb=0)
@@ -470,10 +477,11 @@ try:
                 glafic.set_secondary('ran_seed -122000', verb=0)
                 glafic.startup_setnum(2, 0, 1)
                 glafic.set_lens(1, 'sie', 0.261343256161012, 1.563051e+02, 0.0, 0.0, 2.168966e-01, -1.398259e+00,  0.0, 0.0)
-                glafic.set_lens(2, 'pert', 0.261343256161012, 1.0, 0.0, 0.0, m[i], n[j], 0.0, 0.0)
+                # ### MODIFIED ###: Added o[k] as the last parameter. Verify if this is the correct placement.
+                glafic.set_lens(2, 'pert', 0.261343256161012, 1.0, 0.0, 0.0, m[i], n[j], 0.0, o[k])
                 glafic.set_point(1, 1.0, 0.0, 0.0)
                 glafic.setopt_lens(1, 0, 0, 1, 1, 1, 1, 0, 0)
-                glafic.setopt_lens(2, 0, 0, 0, 0, 1, 1, 0, 0)
+                glafic.setopt_lens(2, 0, 0, 0, 0, 1, 1, 0, 1) # ### MODIFIED ###: Added a flag for the new parameter from o[k]
                 glafic.setopt_point(1, 0, 1, 1)
                 glafic.model_init(verb=0)
                 glafic.readobs_point('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/System 2/pos_point.dat')
@@ -489,7 +497,7 @@ try:
                 macro_model_params = model_name.strip().split('_')[0]
                 macro_columns = model_params[macro_model_params]
 
-                df = pd.DataFrame(columns=['strength', 'pa', 'num_images', 'pos_rms', 'mag_rms', 't_mpole_str', 't_mpole_pa', 'chi2'] + macro_columns)
+                df = pd.DataFrame(columns=['strength', 'pa', 'o_param', 'num_images', 'pos_rms', 'mag_rms', 't_mpole_str', 't_mpole_pa', 'chi2'] + macro_columns)
 
                 model_ver = model_name
                 model_path_0 = model_output_dir
@@ -514,11 +522,12 @@ try:
                     result_df = pd.DataFrame({
                         'strength': [m[i]],
                         'pa': [n[j]],
+                        'o_param': [o[k]], # ### NEW ###
                         'num_images': [num_images],
                         'pos_rms': [pos_rms],
                         'mag_rms': [mag_rms],
-                        't_mpole_str': [dfs[1]['$\epsilon$'][1]],
-                        't_mpole_pa': [dfs[1]['$θ_{m}$'][1]],
+                        't_shear_str': [dfs[1]['$\gamma$'][1]],
+                        't_shear_pa': [dfs[1]['$θ_{\gamma}$'][1]],
                         'chi2': [chi2],
                         **{col: [dfs[0][col][1]] for col in macro_columns}
                     })
@@ -529,11 +538,12 @@ try:
                         result_df = pd.DataFrame({
                             'strength': [m[i]],
                             'pa': [n[j]],
+                            'o_param': [o[k]], # ### NEW ###
                             'num_images': [0],
                             'pos_rms': [0],
                             'mag_rms': [0], 
-                            't_mpole_str': [0],
-                            't_mpole_pa': [0],
+                            't_shear_str': [0],
+                            't_shear_pa': [0],
                             'chi2': [0],
                             **{col: [0] for col in macro_columns}
                         })
@@ -622,7 +632,9 @@ try:
                     upload_to_replit(log_file_path)
 
             # Reset inner loop start indices for the next outer loop iteration
+            start_k = 0
         start_j = 0
+
 
     # If loop completes successfully, clean up the restart file
     print("\n🎉 Simulation completed successfully!")
@@ -632,37 +644,48 @@ try:
 
 except KeyboardInterrupt:
     print("\n⚠️ Simulation interrupted by user (Ctrl+C)")
-    if 'i' in locals() and 'j' in locals():
+    if 'i' in locals() and 'j' in locals() and 'k' in locals():
         if iteration_count > iterations_done:
-            save_j = j - 1 if j > j_start_index else j
-            save_i = i if j > j_start_index else i
-            save_restart_state(restart_file_path, save_i, save_j, chunk_number)
+            save_k = k - 1 if k > k_start_index else k
+            save_j = j if k > k_start_index else (j - 1 if j > j_start_index else j)
+            save_i = i if j > j_start_index else (i - 1 if i > start_i else i)
+            save_restart_state(restart_file_path, save_i, save_j, save_k, chunk_number)
         else:
-            save_restart_state(restart_file_path, start_i, start_j, chunk_number)
+            save_restart_state(restart_file_path, start_i, start_j, start_k, chunk_number)
     else:
         print("⚠️ Could not determine current state for restart file")
 
 except Exception as e:
     print(f"\n❌ Simulation failed with error: {e}")
     # Save the state of the last completed iteration
-    if 'i' in locals() and 'j' in locals():
+    if 'i' in locals() and 'j' in locals() and 'k' in locals():
         if iteration_count > iterations_done:
             # We completed at least one iteration, so save the previous state
-            save_j = j - 1 if j > j_start_index else j
-            save_i = i if j > j_start_index else i
+            save_k = k - 1
+            save_j = j
+            save_i = i
             
             # Handle wrap-around cases
+            if save_k < 0:
+                save_k = len(o) - 1
+                save_j -= 1
             if save_j < 0:
-                save_j = len(n) - 1  
-                save_i = save_i - 1 if save_i > 0 else save_i
-                
-            save_restart_state(restart_file_path, save_i, save_j, chunk_number)
+                save_j = len(n) - 1
+                save_i -= 1
+
+            save_restart_state(restart_file_path, save_i, save_j, save_k, chunk_number)
         else:
             # No iterations completed, save the starting state
-            save_restart_state(restart_file_path, start_i, start_j, chunk_number)
+            save_restart_state(restart_file_path, start_i, start_j, start_k, chunk_number)
     else:
         print("Could not determine current state for restart file")
     raise  # Re-raise the exception for debugging
+
+
+
+end_time = time.time()
+
+print(f"\n⏱️ Total Execution Time: {end_time - start_time:.2f} seconds")
 
 # finally:
 #     if pbar is not None:
@@ -677,4 +700,3 @@ except Exception as e:
 #         print(f"  {csv_file}: {df_size} rows")
 #     else:
 #         print(f"  {csv_file}: Not found")
-
