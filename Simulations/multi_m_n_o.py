@@ -32,7 +32,7 @@ log_file_path = '/Users/ainsleylewis/Documents/Astronomy/Discord Bot/simulation_
 restart_file_path = os.path.join(os.path.dirname(log_file_path), 'simulation_restart_state_3var.json') # New restart file
 
 # --- Performance & Resource Management ---
-NUM_PROCESSORS = 5
+NUM_PROCESSORS = 8
 CHUNK_SIZE = 100000
 CONSOLE_UPDATE_INTERVAL = 100
 
