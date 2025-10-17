@@ -114,18 +114,271 @@ def write_to_csv(df, chunk_number):
 def calculate_chunk_number(iteration_count):
     return ((iteration_count - 1) // CHUNK_SIZE) + 1
 
-# NOTE: Paste your full rms_extract function and model_params dictionary here.
 def rms_extract(model_ver, model_path, constraint):
-    try:
-        pos_rms, mag_rms, chi2 = np.random.rand(3)
-        dfs_dummy = [
-            pd.DataFrame(np.random.rand(1, 7), columns=model_params['SIE']),
-            pd.DataFrame({'$\epsilon$': [np.random.rand()], '$θ_{m}$': [np.random.rand()]})
-        ]
-        return pos_rms, mag_rms, dfs_dummy, chi2
-    except Exception:
-        return -1, -1, None, -1
-model_params = {'SIE': ['$\sigma$', 'x', 'y', 'e', '$θ_{e}$', '$r_{core}$', 'NaN']}
+    global pos_rms, mag_rms, chi2_value
+    # Load the data
+    with open(model_path + '/' + model_ver + '_optresult' + '.dat', 'r') as file:
+        opt_result = file.readlines()
+
+    # Find the last line with 'optimize' in it
+    last_optimize_index = None
+    for idx in range(len(opt_result) - 1, -1, -1):
+        if 'optimize' in opt_result[idx]:
+            last_optimize_index = idx
+            last_optimize_line = opt_result[idx]
+            break
+    if last_optimize_index is None:
+        raise ValueError("No line with 'optimize' found in the file.")
+
+    # Extract everything after the last 'optimize' line
+    opt_result = opt_result[last_optimize_index + 1:]
+
+    # Count the number of lines that start with 'lens'
+    lens_count = sum(1 for line in opt_result if line.startswith('lens'))
+
+    # Initialize a dictionary to hold the lens parameters
+    lens_params_dict = {}
+
+    # Extract the lens parameters
+    lens_params = []
+    for line in opt_result:
+        if line.startswith('lens'):
+            parts = re.split(r'\s+', line.strip())
+            lens_name = parts[1]
+            params = [float(x) for x in parts[2:]]
+
+            # Store the parameters in the dictionary
+            lens_params_dict[lens_name] = params
+            lens_params.append((lens_name, params))
+
+    # Remove the first lens parameter
+    if lens_params:
+        for i in range(len(lens_params)):
+            lens_name, params = lens_params[i]
+            lens_params_dict[lens_name] = params[1:]
+    
+    # Extract the chi2 
+    chi2_line = next((line for line in opt_result if 'chi^2' in line), None)
+    if chi2_line is None:
+        raise ValueError("No line with 'chi2' found in the file.")
+
+    chi2_value = float(chi2_line.split('=')[-1].strip().split()[0])
+    # print(f"✅ Extracted chi2 value: {chi2_value}")
+
+    # Number of len profiles
+    num_lens_profiles = len(lens_params_dict)
+
+    # Use generic column names: param1, param2, ...
+    df = pd.DataFrame()
+    rows = []
+    max_param_len = 0
+
+    for lens_name, params in lens_params_dict.items():
+        row = {'Lens Name': lens_name}
+        for i, val in enumerate(params):
+            row[f'param{i+1}'] = val
+        rows.append(row)
+        if len(params) > max_param_len:
+            max_param_len = len(params)
+
+    columns = ['Lens Name'] + [f'param{i+1}' for i in range(max_param_len)]
+    df = pd.DataFrame(rows, columns=columns)
+    
+    # Load the input parameters from the Python file
+    with open('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/Test/POS+MAG/SIE+SHEAR/pos_point.py', 'r') as file:
+        py = file.readlines()
+
+    # Extracting the input parameters from the Python file
+    set_lens_lines = [line for line in py if line.startswith('glafic.set_lens(')]
+    if not set_lens_lines:
+        raise ValueError("No lines starting with 'glafic.set_lens(' found in the file.")
+
+    set_lens_params = []
+    for line in set_lens_lines:
+        match = re.search(r'set_lens\((.*?)\)', line)
+        if match:
+            params_str = match.group(1)
+            params = [param.strip() for param in params_str.split(',')]
+            set_lens_params.append(params)
+        else:
+            raise ValueError(f"No valid parameters found in line: {line.strip()}")
+
+    # Store the parameters in a dictionary
+    set_lens_dict = {}
+    for params in set_lens_params:
+        if len(params) < 3:
+            raise ValueError(f"Not enough parameters found in line: {params}")
+        lens_name = params[1].strip("'\"")  # Remove quotes from lens name
+        lens_params = [float(x) for x in params[2:]]  # Skip index and lens name
+        set_lens_dict[lens_name] = lens_params
+
+    # Remove the first lens parameter
+    if set_lens_dict:
+        for lens_name, params in set_lens_dict.items():
+            set_lens_dict[lens_name] = params[1:]  # Remove the first parameter (index)
+
+    # Use generic column names: param1, param2, ...
+    df_input = pd.DataFrame()
+    rows_input = []
+    max_param_len_input = 0
+    for lens_name, params in set_lens_dict.items():
+        row = {'Lens Name': lens_name}
+        for i, val in enumerate(params):
+            row[f'param{i+1}'] = val
+        rows_input.append(row)
+        if len(params) > max_param_len_input:
+            max_param_len_input = len(params)
+    columns_input = ['Lens Name'] + [f'param{i+1}' for i in range(max_param_len_input)]
+    df_input = pd.DataFrame(rows_input, columns=columns_input)
+    
+    # Extract input flags from the Python file
+    set_flag_lines = [line for line in py if line.startswith('glafic.setopt_lens(')]
+    if not set_flag_lines:
+        raise ValueError("No lines starting with 'glafic.setopt_lens(' found in the file.")
+    set_flag_params = []
+    for line in set_flag_lines:
+        match = re.search(r'setopt_lens\((.*?)\)', line)
+        if match:
+            params_str = match.group(1)
+            params = [param.strip() for param in params_str.split(',')]
+            set_flag_params.append(params)
+        else:
+            raise ValueError(f"No valid parameters found in line: {line.strip()}")
+    
+    # Store the parameters in a dictionary
+    set_flag_dict = {}
+    for params in set_flag_params:
+        if len(params) < 2:
+            raise ValueError(f"Not enough parameters found in line: {params}")
+        # The lens name is not present in setopt_lens, so use the lens index to map to set_lens_dict
+        lens_index = params[0].strip("'\"")
+        # Find the lens name corresponding to this index from set_lens_params
+        lens_name = None
+        for lens_params in set_lens_params:
+            if lens_params[0].strip("'\"") == lens_index:
+                lens_name = lens_params[1].strip("'\"")
+                break
+        if lens_name is None:
+            raise ValueError(f"Lens name for index {lens_index} not found in set_lens_params")
+        flag = ','.join(params[1:])  # Join all flag values as a string
+        set_flag_dict[lens_name] = flag
+   
+    # Remove the first flag parameter
+    if set_flag_dict:
+        for lens_name, flag in set_flag_dict.items():
+            flag_parts = flag.split(',')
+            set_flag_dict[lens_name] = ','.join(flag_parts[1:])  # Remove the first flag parameter
+    
+    # Dynamically create columns: 'Lens Name', 'flag1', 'flag2', ..., based on the maximum number of flags
+    df_flag = pd.DataFrame()
+    rows_flag = []
+    max_flag_len = 0
+    
+    # First, determine the maximum number of flags
+    for flag in set_flag_dict.values():
+        flag_parts = flag.split(',')
+        if len(flag_parts) > max_flag_len:
+            max_flag_len = len(flag_parts)
+    for lens_name, flag in set_flag_dict.items():
+        flag_parts = flag.split(',')
+        row = {'Lens Name': lens_name}
+        for i, val in enumerate(flag_parts):
+            row[f'flag{i+1}'] = val
+        rows_flag.append(row)
+    columns_flag = ['Lens Name'] + [f'flag{i+1}' for i in range(max_flag_len)]  
+    df_flag = pd.DataFrame(rows_flag, columns=columns_flag)
+    
+    # Combine all dataframes into a list of dataframes for each lens
+    dfs = []
+    
+    for i in range(num_lens_profiles):
+        lens_name = df['Lens Name'][i]
+        
+        # Find the model type (case-insensitive match)
+        model_type = None
+        for m in model_list:
+            if m.lower() == lens_name.lower():
+                model_type = m
+                break
+        if model_type is None:
+            continue
+
+        symbols = model_params[model_type][:7]
+        # Row 2: input
+        row_input = pd.DataFrame([df_input.iloc[i, 1:8].values], columns=symbols)
+        # Row 3: output
+        row_output = pd.DataFrame([df.iloc[i, 1:8].values], columns=symbols)
+        # Row 4: flags
+        row_flags = pd.DataFrame([df_flag.iloc[i, 1:8].values], columns=symbols)
+
+        # Stack vertically, add a label column for row type
+        lens_df = pd.concat([
+            row_input.assign(Type='Input'),
+            row_output.assign(Type='Output'),
+            row_flags.assign(Type='Flag')
+        ], ignore_index=True)
+        lens_df.insert(0, 'Lens Name', lens_name)
+        
+        # Move 'Type' to the second column
+        cols = lens_df.columns.tolist()
+        cols.insert(1, cols.pop(cols.index('Type')))
+        lens_df = lens_df[cols]
+        dfs.append(lens_df)
+    
+    # Anomaly Calculation
+    columnn_names = ['x', 'y', 'mag', 'pos_err', 'mag_err', '1', '2', '3']
+    obs_point = pd.read_csv('/Users/ainsleylewis/Documents/Astronomy/IllustrisTNG Lens Modelling/System 2/pos+flux_point.dat', delim_whitespace=True, header=None, skiprows=1, names=columnn_names)
+    out_point = pd.read_csv(model_path + '/' + model_ver + '_point.dat', delim_whitespace=True, header=None, skiprows=1, names=columnn_names)
+    out_point.drop(columns=['mag_err', '1', '2', '3'], inplace=True)
+
+    # Drop rows in obs_point where the corresponding out_point['mag'] < 1
+    mask = abs(out_point['mag']) >= 1
+    out_point = out_point[mask[:len(out_point)]].reset_index(drop=True)
+    out_point['x_diff'] = abs(out_point['x'] - obs_point['x'])
+    out_point['y_diff'] = abs(out_point['y'] - obs_point['y'])
+    out_point['mag_diff'] = abs(abs(out_point['mag']) - abs(obs_point['mag']))
+    out_point['pos_sq'] = np.sqrt((out_point['x_diff']**2 + out_point['y_diff']**2).astype(float))  # Plotted on graph
+
+    # RMS
+    pos_rms = np.average(out_point['pos_sq'])
+
+    mag_rms = np.average(np.sqrt((out_point['mag_diff']**2).astype(float)))
+
+    return pos_rms, mag_rms, dfs, chi2_value
+
+pow_params = ['$z_{s,fid}$', 'x', 'y', 'e', '$θ_{e}$', '$r_{Ein}$', '$\gamma$ (PWI)']
+
+# SIE
+sie_params = ['$\sigma$', 'x', 'y', 'e', '$θ_{e}$', '$r_{core}$', 'NaN']
+
+# NFW
+nfw_params = ['M', 'x', 'y', 'e', '$θ_{e}$', 'c or $r_{s}$', 'NaN']
+
+# EIN
+ein_params = ['M', 'x', 'y', 'e', '$θ_{e}$', 'c or $r_{s}$', r'$\alpha_{e}$']
+
+# SHEAR 
+shear_params = ['$z_{s,fid}$', 'x', 'y', '$\gamma$', '$θ_{\gamma}$', 'NaN', '$\kappa$']
+
+# Sersic
+sersic_params = ['$M_{tot}$', 'x', 'y', 'e', '$θ_{e}$', '$r_{e}$', '$n$']
+
+# Cored SIE
+cored_sie_params = ['M', 'x', 'y', 'e', '$θ_{e}$', '$r_{core}$', 'NaN']
+
+# Multipoles
+mpole_params = ['$z_{s,fid}$', 'x', 'y', '$\epsilon$', '$θ_{m}$', 'm', 'n']
+
+model_list = ['POW', 'SIE', 'ANFW', 'EIN', 'PERT', 'SERS', 'MPOLE']
+model_params = {
+    'POW': pow_params,
+    'SIE': sie_params,
+    'ANFW': nfw_params,
+    'EIN': ein_params,
+    'PERT': shear_params,
+    'SERS': sersic_params,
+    'MPOLE' : mpole_params
+}
 
 
 # ==== Worker Function for Multiprocessing ====
