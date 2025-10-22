@@ -15,12 +15,8 @@ import multiprocessing
 from itertools import product
 import uuid
 
-# For debugging workers, you can comment out these lines.
-# sys.stdout = open(os.devnull, 'w')
-# sys.stderr = open(os.devnull, 'w')
 
 # ==== Config ====
-# --- Simulation Parameters (3 Variables) ---
 m = [round(x, 5) for x in np.linspace(0.05, 0.1, 2)]
 m_lens = 2
 m_param = 5
@@ -31,29 +27,28 @@ o = [round(x, 5) for x in np.linspace(0, 1, 10)]
 o_lens = 2
 o_param = 8
 
-# --- File Paths (CHANGE THESE FOR YOUR SETUP) ---
-model_output_dir = '/Volumes/T7 Shield/Simulations/Output' # New output directory
-base_results_path = '/Volumes/T7 Shield/Simulations/Input'
-log_file_path = '/Volumes/T7 Shield/Simulations/Run/simulation_log.txt'
-restart_file_path = os.path.join(os.path.dirname(log_file_path), 'simulation_restart_state_var.json') # New restart file
-obs_point_file = base_results_path + '/pos+flux_point.dat'  # Observation file path
-constraint_file = base_results_path + '/pos_point.dat'  # Constraint file path
-prior_file = None
-input_py_file = '/Volumes/T7 Shield/Simulations/Input/input.py'
-sim_name = 'Sim 1'
+# --- File Paths ---
+model_output_dir = '/Volumes/T7 Shield/Simulations/Output' # Model Save Path
+base_results_path = '/Volumes/T7 Shield/Simulations/Input' # Path with all input files
+log_file_path = '/Volumes/T7 Shield/Simulations/Run/simulation_log.txt' # Log file path
+restart_file_path = os.path.join(os.path.dirname(log_file_path), 'simulation_restart_state_var.json') # Restart file
+obs_point_file = base_results_path + '/pos+flux_point.dat'  # Observation file path ( Should include all available data )
+constraint_file = base_results_path + '/pos_point.dat'  # Constraint file path ( Same as obs_point but changed for the specific constraint )
+prior_file = None # Path to prior file
+input_py_file = '/Volumes/T7 Shield/Simulations/Input/input.py' # Input Python file path
+sim_name = 'Sim 1' # Name of Sim
 
 # --- Performance & Resource Management ---
-NUM_PROCESSORS = 4
-CHUNK_SIZE = 100000
-CONSOLE_UPDATE_INTERVAL = 100
+NUM_PROCESSORS = 4 # Number of CPU cores to use
+CHUNK_SIZE = 100000  # Sims split into chuncks of this size
+CONSOLE_UPDATE_INTERVAL = 100 # Update console output every N iterations
 
 # Ensure the output directories exist
 os.makedirs(model_output_dir, exist_ok=True)
 os.makedirs(base_results_path, exist_ok=True)
 
 
-# ==== Helpers ====
-# NOTE: All helper functions are pasted here for completeness.
+# ==== Helper Functions ====
 def get_cpu_usage():
     return psutil.cpu_percent(interval=None)
 
@@ -89,7 +84,6 @@ def get_disk_usage_info(directory, avg_model_size, models_remaining):
         return {"used_percent": 0, "free_gb": 0, "threat_level": "Unavailable"}
 
 def save_restart_state(path, i, j, k, chunk_number):
-    """Saves the current loop indices for a 3-variable run."""
     state = {'i': i, 'j': j, 'k': k, 'chunk_number': chunk_number}
     with open(path, 'w') as f:
         json.dump(state, f, indent=4)
@@ -97,7 +91,6 @@ def save_restart_state(path, i, j, k, chunk_number):
         real_stdout.write(f"\n✅ Simulation state saved to {path} at indices (i={i}, j={j}, k={k}), chunk={chunk_number}.\n")
 
 def load_restart_state(path):
-    """Loads loop indices for a 3-variable run."""
     if not os.path.exists(path):
         with open(sys.__stdout__.fileno(), 'w', closefd=False) as real_stdout:
             real_stdout.write("ℹ️ Restart file not found. Starting a fresh simulation.\n")
@@ -319,13 +312,10 @@ model_params = {'POW': pow_params, 'SIE': sie_params, 'ANFW': nfw_params, 'EIN':
 
 # ==== Worker Function for Multiprocessing ====
 def run_single_model(params):
-    """
-    Worker function for a 3-variable model run.
-    """
+
     i, j, k, m_val, n_val, o_val = params  # Unpack 3 variables and their indices
 
     model_name = f'SIE_SHEAR_{m_val}_{n_val}_{o_val}'
-    # --- CORRECTED: No longer creating sub-directories. All output goes to the main output directory.
     
     unique_id = uuid.uuid4()
     temp_input_py_file = os.path.join(os.path.dirname(input_py_file), f"temp_input_{unique_id}.py")
@@ -337,7 +327,6 @@ def run_single_model(params):
             lines = f.readlines()
 
         for line_num, line in enumerate(lines):
-            # --- CORRECTED: Set the path to the main output directory ---
             if line.strip().startswith('path ='):
                 lines[line_num] = f"path = '{model_output_dir}/{model_name}'\n"
             elif line.strip().startswith('constraint_file ='):
@@ -372,7 +361,6 @@ def run_single_model(params):
     
         os.system(f'python3 "{temp_input_py_file}"')
 
-        # --- CORRECTED: Call rms_extract with the main output directory ---
         pos_rms, mag_rms, dfs, chi2, source = rms_extract(model_name, model_output_dir, temp_input_py_file)
         if pos_rms == -1: raise IOError("rms_extract failed.")
         
@@ -408,7 +396,6 @@ def run_single_model(params):
             for len_num in range(1, num_lenses):
                 for col in micro_cols:
                     stripped_col = col.strip(f'_{len_num}')
-                    print(stripped_col)
                     result_dict[col] = _safe_get(1, stripped_col)
         
         result_dict['source_x'] = source[0][1] if source and len(source) > 0 else 0
@@ -422,7 +409,6 @@ def run_single_model(params):
         if os.path.exists(temp_input_py_file):
             os.remove(temp_input_py_file)
             
-        # --- CORRECTED: Clean up output files from the main output directory ---
         for suffix in ['_point.dat', '_optresult.dat']:
             file_to_delete = os.path.join(model_output_dir, f"{model_name}{suffix}")
             if os.path.exists(file_to_delete):
