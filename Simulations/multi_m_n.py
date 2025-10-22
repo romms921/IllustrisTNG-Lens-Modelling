@@ -20,7 +20,7 @@ import uuid
 m = [round(x, 5) for x in np.linspace(0.05, 0.1, 2)]
 m_lens = 2
 m_param = 5
-n = [round(x, 5) for x in np.linspace(0, 360, 10)]
+n = [round(x, 5) for x in np.linspace(0, 360, 100)]
 n_lens = 2
 n_param = 6
 
@@ -36,7 +36,7 @@ input_py_file = '/Volumes/T7 Shield/Simulations/Input/input.py' # Input Python f
 sim_name = 'Sim 1' # Name of Sim
 
 # --- Performance & Resource Management ---
-NUM_PROCESSORS = 4 # Number of CPU cores to use
+NUM_PROCESSORS = 6 # Number of CPU cores to use
 CHUNK_SIZE = 100000  # Sims split into chuncks of this size
 CONSOLE_UPDATE_INTERVAL = 100 # Update console output every N iterations
 

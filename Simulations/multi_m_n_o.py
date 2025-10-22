@@ -39,7 +39,7 @@ input_py_file = '/Volumes/T7 Shield/Simulations/Input/input.py' # Input Python f
 sim_name = 'Sim 1' # Name of Sim
 
 # --- Performance & Resource Management ---
-NUM_PROCESSORS = 4 # Number of CPU cores to use
+NUM_PROCESSORS = 8 # Number of CPU cores to use
 CHUNK_SIZE = 100000  # Sims split into chuncks of this size
 CONSOLE_UPDATE_INTERVAL = 100 # Update console output every N iterations
 
