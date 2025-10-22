@@ -34,6 +34,7 @@ constraint_file = base_results_path + '/pos_point.dat'  # Constraint file path (
 prior_file = None # Path to prior file
 input_py_file = '/Volumes/T7 Shield/Simulations/Input/input.py' # Input Python file path
 sim_name = 'Sim 1' # Name of Sim
+model = 'SIE_SHEAR' # Macro Model Type (Any subsequent models must be separated by a single _ E.g. SIE_SHEAR)
 
 # --- Performance & Resource Management ---
 NUM_PROCESSORS = 6 # Number of CPU cores to use
@@ -312,7 +313,7 @@ def run_single_model(params):
 
     i, j, m_val, n_val = params  # Unpack 2 variables and their indices
 
-    model_name = f'SIE_SHEAR_{m_val}_{n_val}'
+    model_name = model + f'_{m_val}_{n_val}'
     
     unique_id = uuid.uuid4()
     temp_input_py_file = os.path.join(os.path.dirname(input_py_file), f"temp_input_{unique_id}.py")
@@ -381,7 +382,8 @@ def run_single_model(params):
                 micro_columns = [f'{col}_{i}' for col in micro_columns]
 
         macro_cols = list(dict.fromkeys(macro_columns[:7])) if isinstance(macro_columns, list) else [macro_columns]
-        micro_cols = list(dict.fromkeys(micro_columns[:7])) if isinstance(micro_columns, list) else [micro_columns]
+        if num_lenses > 1:
+            micro_cols = list(dict.fromkeys(micro_columns[:7])) if isinstance(micro_columns, list) else [micro_columns]
 
         def _safe_get(dfs_idx, col):
             if len(dfs) > dfs_idx and col in dfs[dfs_idx].columns:

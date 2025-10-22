@@ -316,7 +316,7 @@ def run_single_model(params):
 
     i, j, k, m_val, n_val, o_val = params  # Unpack 3 variables and their indices
 
-    model_name = f'{model}_{m_val}_{n_val}_{o_val}'
+    model_name = model + f'_{m_val}_{n_val}_{o_val}'
     
     unique_id = uuid.uuid4()
     temp_input_py_file = os.path.join(os.path.dirname(input_py_file), f"temp_input_{unique_id}.py")
