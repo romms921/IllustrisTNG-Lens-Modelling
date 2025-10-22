@@ -17,15 +17,15 @@ import uuid
 
 
 # ==== Config ====
-m = [round(x, 5) for x in np.linspace(0.05, 0.1, 2)]
-m_lens = 2
-m_param = 5
-n = [round(x, 5) for x in np.linspace(0, 360, 10)]
-n_lens = 2
-n_param = 6
-o = [round(x, 5) for x in np.linspace(0, 1, 10)]
-o_lens = 2
-o_param = 8
+m = [round(x, 5) for x in np.linspace(130, 132, 2)]
+m_lens = 1
+m_param = 2
+n = [round(x, 5) for x in np.linspace(0, 0.9, 10)]
+n_lens = 1
+n_param = 5
+o = [round(x, 5) for x in np.linspace(0, 360, 10)]
+o_lens = 1
+o_param = 6
 
 # --- File Paths ---
 model_output_dir = '/Volumes/T7 Shield/Simulations/Output' # Model Save Path
@@ -37,6 +37,7 @@ constraint_file = base_results_path + '/pos_point.dat'  # Constraint file path (
 prior_file = None # Path to prior file
 input_py_file = '/Volumes/T7 Shield/Simulations/Input/input.py' # Input Python file path
 sim_name = 'Sim 1' # Name of Sim
+model = 'SIE' # Macro Model Type (Any subsequent models must be separated by a single _ E.g. SIE_SHEAR)
 
 # --- Performance & Resource Management ---
 NUM_PROCESSORS = 8 # Number of CPU cores to use
@@ -315,7 +316,7 @@ def run_single_model(params):
 
     i, j, k, m_val, n_val, o_val = params  # Unpack 3 variables and their indices
 
-    model_name = f'SIE_SHEAR_{m_val}_{n_val}_{o_val}'
+    model_name = f'{model}_{m_val}_{n_val}_{o_val}'
     
     unique_id = uuid.uuid4()
     temp_input_py_file = os.path.join(os.path.dirname(input_py_file), f"temp_input_{unique_id}.py")
@@ -384,7 +385,8 @@ def run_single_model(params):
                 micro_columns = [f'{col}_{i}' for col in micro_columns]
 
         macro_cols = list(dict.fromkeys(macro_columns[:7])) if isinstance(macro_columns, list) else [macro_columns]
-        micro_cols = list(dict.fromkeys(micro_columns[:7])) if isinstance(micro_columns, list) else [micro_columns]
+        if num_lenses > 1:
+            micro_cols = list(dict.fromkeys(micro_columns[:7])) if isinstance(micro_columns, list) else [micro_columns]
 
         def _safe_get(dfs_idx, col):
             if len(dfs) > dfs_idx and col in dfs[dfs_idx].columns:
