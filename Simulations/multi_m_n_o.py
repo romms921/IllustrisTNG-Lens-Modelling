@@ -21,13 +21,13 @@ import uuid
 
 # ==== Config ====
 # --- Simulation Parameters (3 Variables) ---
-m = [round(x, 5) for x in np.linspace(0.05, 0.1, 1)]
+m = [round(x, 5) for x in np.linspace(0.05, 0.1, 2)]
 m_lens = 2
 m_param = 5
-n = [round(x, 5) for x in np.linspace(0, 360, 1)]
+n = [round(x, 5) for x in np.linspace(0, 360, 10)]
 n_lens = 2
 n_param = 6
-o = [round(x, 5) for x in np.linspace(0, 1, 1)]
+o = [round(x, 5) for x in np.linspace(0, 1, 10)]
 o_lens = 2
 o_param = 8
 
@@ -40,6 +40,7 @@ obs_point_file = base_results_path + '/pos+flux_point.dat'  # Observation file p
 constraint_file = base_results_path + '/pos_point.dat'  # Constraint file path
 prior_file = None
 input_py_file = '/Volumes/T7 Shield/Simulations/Input/input.py'
+sim_name = 'Sim 1'
 
 # --- Performance & Resource Management ---
 NUM_PROCESSORS = 4
@@ -115,7 +116,7 @@ def load_restart_state(path):
         return 0, 0, 0, 1
 
 def get_csv_filename(chunk_number):
-    sim_name = model_output_dir.strip('/').split('/')[-1]
+    # sim_name = model_output_dir.strip('/').split('/')[-1]
     return os.path.join(model_output_dir, f"{sim_name}_summary.csv" if chunk_number == 1 else f"{sim_name}_summary_{chunk_number}.csv")
 
 def write_to_csv(df, chunk_number):
