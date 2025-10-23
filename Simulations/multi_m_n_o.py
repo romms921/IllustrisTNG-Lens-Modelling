@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-import glafic
+import os
+import subprocess
 import numpy as np
 import psutil
 import shutil
 import os
 import time
-import requests
 import json
 import pandas as pd
 import re
@@ -17,30 +17,30 @@ import uuid
 
 
 # ==== Config ====
-m = [round(x, 5) for x in np.linspace(130, 132, 2)]
+m = [round(x, 5) for x in np.linspace(110, 150, 100)]
 m_lens = 1
 m_param = 2
-n = [round(x, 5) for x in np.linspace(0, 0.9, 10)]
+n = [round(x, 5) for x in np.linspace(0.0, 0.9, 100)]
 n_lens = 1
 n_param = 5
-o = [round(x, 5) for x in np.linspace(0, 360, 10)]
+o = [round(x, 5) for x in np.linspace(0, 360, 100)]
 o_lens = 1
 o_param = 6
 
 # --- File Paths ---
-model_output_dir = '/Volumes/T7 Shield/Simulations/Output' # Model Save Path
-base_results_path = '/Volumes/T7 Shield/Simulations/Input' # Path with all input files
-log_file_path = '/Volumes/T7 Shield/Simulations/Run/simulation_log.txt' # Log file path
+model_output_dir = '/home/rommulus/Documents/Projects/itng_lensing/Simulations/Output' # Model Save Path
+base_results_path = '/home/rommulus/Documents/Projects/itng_lensing/Simulations/Input' # Path with all input files
+log_file_path = '/home/rommulus/Documents/Projects/itng_lensing/Simulations/Run/simulation_log.txt' # Log file path
 restart_file_path = os.path.join(os.path.dirname(log_file_path), 'simulation_restart_state_var.json') # Restart file
 obs_point_file = base_results_path + '/pos+flux_point.dat'  # Observation file path ( Should include all available data )
 constraint_file = base_results_path + '/pos_point.dat'  # Constraint file path ( Same as obs_point but changed for the specific constraint )
 prior_file = None # Path to prior file
-input_py_file = '/Volumes/T7 Shield/Simulations/Input/input.py' # Input Python file path
+input_py_file = '/home/rommulus/Documents/Projects/itng_lensing/Simulations/Input/input.py' # Input Python file path
 sim_name = 'Sim 1' # Name of Sim
-model = 'SIE' # Macro Model Type (Any subsequent models must be separated by a single _ E.g. SIE_SHEAR)
+model = 'SIE' # Model Type
 
 # --- Performance & Resource Management ---
-NUM_PROCESSORS = 8 # Number of CPU cores to use
+NUM_PROCESSORS = 20 # Number of CPU cores to use
 CHUNK_SIZE = 100000  # Sims split into chuncks of this size
 CONSOLE_UPDATE_INTERVAL = 100 # Update console output every N iterations
 
@@ -88,6 +88,7 @@ def save_restart_state(path, i, j, k, chunk_number):
     state = {'i': i, 'j': j, 'k': k, 'chunk_number': chunk_number}
     with open(path, 'w') as f:
         json.dump(state, f, indent=4)
+    # Use sys.__stdout__ to avoid issues if stdout is redirected
     with open(sys.__stdout__.fileno(), 'w', closefd=False) as real_stdout:
         real_stdout.write(f"\n✅ Simulation state saved to {path} at indices (i={i}, j={j}, k={k}), chunk={chunk_number}.\n")
 
@@ -110,7 +111,6 @@ def load_restart_state(path):
         return 0, 0, 0, 1
 
 def get_csv_filename(chunk_number):
-    # sim_name = model_output_dir.strip('/').split('/')[-1]
     return os.path.join(model_output_dir, f"{sim_name}_summary.csv" if chunk_number == 1 else f"{sim_name}_summary_{chunk_number}.csv")
 
 def write_to_csv(df, chunk_number):
@@ -124,28 +124,21 @@ def calculate_chunk_number(iteration_count):
 def rms_extract(model_ver, model_path, temp_input_py_file):
     global pos_rms, mag_rms, chi2_value
     
-    # --- CORRECTED: Use os.path.join for robust path construction ---
     opt_result_file = os.path.join(model_path, f'{model_ver}_optresult.dat')
     
-    # Load the data
     with open(opt_result_file, 'r') as file:
         opt_result = file.readlines()
 
-    # Find the last line with 'optimize' in it
     last_optimize_index = None
     for idx in range(len(opt_result) - 1, -1, -1):
         if 'optimize' in opt_result[idx]:
             last_optimize_index = idx
-            last_optimize_line = opt_result[idx]
             break
     if last_optimize_index is None:
         raise ValueError("No line with 'optimize' found in the file.")
 
-    # Extract everything after the last 'optimize' line
     opt_result = opt_result[last_optimize_index + 1:]
 
-    # Count the number of lines that start with 'lens'
-    lens_count = sum(1 for line in opt_result if line.startswith('lens'))
     lens_params_dict = {}
     lens_params = []
     for line in opt_result:
@@ -265,9 +258,9 @@ def rms_extract(model_ver, model_path, temp_input_py_file):
     for i in range(num_lens_profiles):
         lens_name = df['Lens Name'][i]
         model_type = None
-        for m in model_list:
-            if m.lower() == lens_name.lower():
-                model_type = m
+        for m_model in model_list:
+            if m_model.lower() == lens_name.lower():
+                model_type = m_model
                 break
         if model_type is None: continue
         symbols = model_params[model_type][:7]
@@ -282,12 +275,11 @@ def rms_extract(model_ver, model_path, temp_input_py_file):
         dfs.append(lens_df)
     
     columnn_names = ['x', 'y', 'mag', 'pos_err', 'mag_err', '1', '2', '3']
-    obs_point = pd.read_csv(obs_point_file, delim_whitespace=True, header=None, skiprows=1, names=columnn_names)
+    obs_point = pd.read_csv(obs_point_file, sep='\s+', header=None, skiprows=1, names=columnn_names)
     
-    # --- CORRECTED: Also use os.path.join for the point file path ---
     out_point_file = os.path.join(model_path, f'{model_ver}_point.dat')
-    out_point = pd.read_csv(out_point_file, delim_whitespace=True, header=None, skiprows=1, names=columnn_names)
-    
+    out_point = pd.read_csv(out_point_file, sep='\s+', header=None, skiprows=1, names=columnn_names)
+
     out_point.drop(columns=['mag_err', '1', '2', '3'], inplace=True)
     mask = abs(out_point['mag']) >= 1
     out_point = out_point[mask[:len(out_point)]].reset_index(drop=True)
@@ -315,15 +307,15 @@ model_params = {'POW': pow_params, 'SIE': sie_params, 'ANFW': nfw_params, 'EIN':
 def run_single_model(params):
 
     i, j, k, m_val, n_val, o_val = params  # Unpack 3 variables and their indices
-
     model_name = model + f'_{m_val}_{n_val}_{o_val}'
-    
     unique_id = uuid.uuid4()
     temp_input_py_file = os.path.join(os.path.dirname(input_py_file), f"temp_input_{unique_id}.py")
     
     try:
-        shutil.copy(input_py_file, temp_input_py_file)
+        worker_id = multiprocessing.current_process()._identity[0] - 1
+        core_to_use = worker_id % NUM_PROCESSORS
 
+        shutil.copy(input_py_file, temp_input_py_file)
         with open(temp_input_py_file, 'r') as f:
             lines = f.readlines()
 
@@ -338,7 +330,6 @@ def run_single_model(params):
             raise ValueError(f"CRITICAL: No 'glafic.set_lens' lines found in '{temp_input_py_file}'.")
 
         params_to_set = [(m_lens, m_param, m_val), (n_lens, n_param, n_val), (o_lens, o_param, o_val)]
-
         for lens_target, param_index, value in params_to_set:
             if lens_target > len(lens_lines_indices):
                 raise IndexError(f"Config Error: m/n/o_lens is {lens_target}, but only {len(lens_lines_indices)} 'glafic.set_lens' lines found.")
@@ -350,7 +341,6 @@ def run_single_model(params):
             
             parts = [p.strip() for p in match.group(1).split(',')]
             target_index_in_parts = 2 + (param_index - 1)
-
             if target_index_in_parts >= len(parts):
                 raise IndexError(f"Config Error: m/n/o_param is {param_index}, which is out of range for the parameters in line:\n>>> {line.strip()}")
             
@@ -359,8 +349,22 @@ def run_single_model(params):
 
         with open(temp_input_py_file, 'w') as f:
             f.writelines(lines)
-    
-        os.system(f'python3 "{temp_input_py_file}"')
+
+        command = [
+            'taskset', '-c', str(core_to_use),
+            'python3', temp_input_py_file
+        ]
+        
+        subprocess_env = os.environ.copy()
+        subprocess_env.update({
+            "MKL_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1"
+        })
+
+        subprocess.run(
+            command, env=subprocess_env, check=True, capture_output=True
+        )
 
         pos_rms, mag_rms, dfs, chi2, source = rms_extract(model_name, model_output_dir, temp_input_py_file)
         if pos_rms == -1: raise IOError("rms_extract failed.")
@@ -370,9 +374,12 @@ def run_single_model(params):
         if os.path.exists(out_point_file):
             with open(out_point_file, 'r') as f: num_images = sum(1 for line in f if line.strip()) - 1
             
-        result_dict = {'m': m_val, 'n': n_val, 'o': o_val, 'num_images': num_images, 'pos_rms': pos_rms, 'mag_rms': mag_rms, 'chi2': chi2}
+        result_dict = {
+            'm': m_val, 'n': n_val, 'o': o_val, 
+            'num_images': num_images, 'pos_rms': pos_rms, 
+            'mag_rms': mag_rms, 'chi2': chi2
+        }
         
-
         num_lenses = model_name.count('_') - 2
         macro_model_params = model_name.strip().split('_')[0]
         macro_columns = model_params[macro_model_params]
@@ -410,7 +417,6 @@ def run_single_model(params):
     finally:
         if os.path.exists(temp_input_py_file):
             os.remove(temp_input_py_file)
-            
         for suffix in ['_point.dat', '_optresult.dat']:
             file_to_delete = os.path.join(model_output_dir, f"{model_name}{suffix}")
             if os.path.exists(file_to_delete):
@@ -433,6 +439,7 @@ def main():
     start_index = 0
     if start_i > 0 or start_j > 0 or start_k > 0:
         try:
+            # Find the index of the task to resume from
             last_idx = [task[:3] for task in all_tasks].index((start_i, start_j, start_k))
             start_index = last_idx + 1
         except ValueError:
@@ -454,19 +461,26 @@ def main():
     disk_info = {"used_percent": 0, "free_gb": 0, "threat_level": "Calculating..."}
 
     try:
-        with multiprocessing.Pool(processes=NUM_PROCESSORS) as pool:
+        # Use a Pool for managing worker processes
+        with multiprocessing.Pool(processes=min(NUM_PROCESSORS, len(tasks_to_run))) as pool:
+            
+            # --- THIS IS THE KEY CHANGE ---
+            # Use imap_unordered to get results as they are completed, not all at once.
             results_iterator = pool.imap_unordered(run_single_model, tasks_to_run)
             
+            # This loop now iterates once per completed task, allowing immediate processing.
             for i_res, j_res, k_res, result_dict in results_iterator:
                 if 'error' in result_dict:
                     print(f"Warning: A worker failed with error: {result_dict['error']}")
                     continue
                 
+                # Update progress and save result immediately
                 last_i, last_j, last_k = i_res, j_res, k_res
                 current_chunk = calculate_chunk_number(iterations_done + 1)
                 write_to_csv(pd.DataFrame([result_dict]), current_chunk)
                 iterations_done += 1
 
+                # Update console and logs periodically
                 if iterations_done % CONSOLE_UPDATE_INTERVAL == 0 or iterations_done == total_iterations:
                     percentage_complete = (iterations_done / total_iterations) * 100
                     print(f"Progress: {iterations_done} / {total_iterations} ({percentage_complete:.2f}%)")
@@ -478,15 +492,13 @@ def main():
                     avg_model_size = (current_dir_size - initial_dir_size) / models_this_run
                     disk_info = get_disk_usage_info(base_results_path, avg_model_size, total_iterations - iterations_done)
                 
-                percentage_complete = (iterations_done / total_iterations) * 100
                 elapsed_time = time.time() - start_time
                 avg_time_per_iteration = elapsed_time / models_this_run if models_this_run > 0 else 0
                 approx_time_remaining = (total_iterations - iterations_done) * avg_time_per_iteration
 
                 progress_info = {
-                    'current_iteration': iterations_done,
-                    'total_iterations': total_iterations,
-                    'percentage_complete': percentage_complete,
+                    'current_iteration': iterations_done, 'total_iterations': total_iterations,
+                    'percentage_complete': (iterations_done / total_iterations) * 100,
                     'avg_time_per_iteration': avg_time_per_iteration,
                     'approx_time_remaining': approx_time_remaining,
                     'ram_usage_percent': get_memory_usage(),
@@ -498,8 +510,9 @@ def main():
                 }
 
                 with open(log_file_path, 'w') as log_file:
-                    log_file.write(f"Iteration {iterations_done}/{total_iterations}: {progress_info}\n")
+                    log_file.write(json.dumps(progress_info) + '\n')
 
+                # Save restart state periodically
                 if iterations_done - last_state_saved_at_iteration >= 500:
                     save_restart_state(restart_file_path, last_i, last_j, last_k, current_chunk)
                     last_state_saved_at_iteration = iterations_done
@@ -518,6 +531,7 @@ def main():
                 os.remove(restart_file_path)
                 print("🗑️ Removed restart file.")
         else:
+            # Save the final state, no matter what
             save_restart_state(restart_file_path, last_i, last_j, last_k, calculate_chunk_number(iterations_done))
         print("✅ Final state saved.")
 
