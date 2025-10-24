@@ -1,6 +1,6 @@
 
 Sim 1:
-System 1 
+System 1    
 m = [round(x, 5) for x in np.linspace(110, 150, 100)]
 m_lens = 1
 m_param = 2
