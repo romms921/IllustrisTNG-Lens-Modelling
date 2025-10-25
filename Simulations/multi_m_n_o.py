@@ -382,6 +382,8 @@ def run_single_model(params):
         
         num_lenses = model_name.count('_') - 2
         macro_model_params = model_name.strip().split('_')[0]
+        if macro_model_params == 'NFW':
+            macro_model_params = 'ANFW'
         macro_columns = model_params[macro_model_params]
 
         if num_lenses > 1:
