@@ -518,6 +518,7 @@ def main():
                 if iterations_done - last_state_saved_at_iteration >= 500:
                     save_restart_state(restart_file_path, last_i, last_j, last_k, current_chunk)
                     last_state_saved_at_iteration = iterations_done
+            pool.terminate()
     
     except KeyboardInterrupt:
         print("\n⚠️ Simulation interrupted by user.")
