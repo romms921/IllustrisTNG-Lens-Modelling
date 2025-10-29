@@ -172,6 +172,9 @@ glafic.quit()
 
 
 Sim 5:
+sim_name = 'Sim 5' # Name of Sim
+model = 'POW' # Model Type
+
 m = [round(x, 5) for x in np.linspace(1.5, 2.5, 100)]
 m_lens = 1
 m_param = 8
@@ -181,11 +184,15 @@ n_param = 5
 o = [round(x, 5) for x in np.linspace(0, 360, 100)]
 o_lens = 1
 o_param = 6
-constraint_file = '/Volumes/T7 Shield/Simulations/Input/pos+flux_point.dat'
-prior_file = None
-critical_curve = False
 
-glafic.init(0.3, 0.7, -1.0, 0.7, path, 20.0, 20.0, 21.56, 21.56, 0.01, 0.01, 1, verb=0)
+constraint_file = base_results_path + '/pos+flux_point.dat'  # Constraint file path ( Same as obs_point but changed for the specific constraint )
+prior_file = None  # Path to prior file
+critical_curve = False # Whether to save critical curves and caustics (Very large file size )
+time_delay = False # Whether to extract time delay information
+h0 = False # Whether to extract H0 value
+input_py_file = base_results_path + '/pow_input.py' # Input Python file path
+
+glafic.init(0.3, 0.7, -1.0, 0.7, path, -3.0, -3.0, 3.0, 3.0, 0.01, 0.01, 1, verb=0)
 glafic.set_secondary('chi2_splane 1', verb=0)
 glafic.set_secondary('chi2_checknimg 0', verb=0)
 glafic.set_secondary('chi2_restart   -1', verb=0)
@@ -193,9 +200,9 @@ glafic.set_secondary('chi2_usemag    1', verb=0)
 glafic.set_secondary('hvary          0', verb=0)
 glafic.set_secondary('ran_seed -122000', verb=0)
 glafic.startup_setnum(1, 0, 1)
-glafic.set_lens(1, 'pow', 0.261343256161012, 1.0, 20.78, 20.78, 0.107, 23.38, 0.41, 2.0)
+glafic.set_lens(1, 'pow', 0.261343256161012, 1.0, 0.0, 0.0, 0.107, 23.38, 0.41, 2.0)
 # glafic.set_lens(2, 'pert', 0.261343256161012, 1.0, 20.78, 20.78, 0.001, 360.0, 0.0, 1.0)
-glafic.set_point(1, 1.0, 20.78, 20.78)
+glafic.set_point(1, 1.0, 0.0, 0.0)
 glafic.setopt_lens(1, 0, 0, 1, 1, 0, 0, 1, 0)
 # glafic.setopt_lens(2, 0, 0, 0, 0, 1, 1, 0, 1)
 glafic.setopt_point(1, 0, 1, 1)
