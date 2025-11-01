@@ -12,35 +12,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 from mpl_toolkits.mplot3d import Axes3D
-import multiprocessing as mp # Import the multiprocessing library
-import time # To time the execution
+import multiprocessing as mp
+import time
+from functools import partial # Import the partial function
 
-# Global variables to hold interpolation data
-_INTERP_POINTS = None
-_INTERP_VALUES = None
-
-def chi2_interpolator_with_bounds(e, theta_e, phi):
+# --- Worker Function for Multiprocessing ---
+# This function is defined at the top level so it can be 'pickled' and sent to workers.
+# It now accepts the data arrays as its first arguments.
+def worker_interpolator(interp_points, interp_values, e, theta_e, phi):
     """
-    Global function for interpolation. This will be called by worker processes.
+    A worker-safe function for interpolation.
     """
     # --- CONSTRAINT CHECK ---
     if e < 0:
         return np.inf
 
-    # Proceed with 3D interpolation using global data
-    chi2 = griddata(_INTERP_POINTS, _INTERP_VALUES, (e, theta_e, phi), method='linear', fill_value=np.inf)
+    # Perform 3D interpolation using the provided data
+    chi2 = griddata(interp_points, interp_values, (e, theta_e, phi), method='linear', fill_value=np.inf)
     return chi2
 
-def setup_interpolator(points, values):
-    """
-    Helper function to set the global data for the interpolator.
-    """
-    global _INTERP_POINTS, _INTERP_VALUES
-    _INTERP_POINTS = points
-    _INTERP_VALUES = values
 
-
-# --- Nelder-Mead Optimizer Modified for Multiprocessing ---
+# --- Nelder-Mead Optimizer (No changes needed in this function) ---
 def nelder_mead_glafic_with_history(pool, func, x0, y0, z0, ftol=1e-4, nmax=10000, verbose=False):
     """
     Nelder-Mead simplex optimization for 3 parameters, using a multiprocessing pool
@@ -153,36 +145,34 @@ def nelder_mead_glafic_with_history(pool, func, x0, y0, z0, ftol=1e-4, nmax=1000
     return v[vs][0], v[vs][1], v[vs][2], f[vs], eval_history
 
 # --- Main Application ---
-# The main script must be guarded by `if __name__ == "__main__":` for multiprocessing
 if __name__ == "__main__":
     # 1. LOAD YOUR DATA
     print("Step 1: Creating sample data...")
-    # Using a larger dataset to better see the performance improvement
-    np.random.seed(42)
     
     # 2. PREPARE DATA FOR INTERPOLATION
     print("\nStep 2: Extracting data for interpolation...")
     points = data[['e', '$θ_{e}$', '$\\sigma$']].values
     values = data['chi2'].values
     
-    # 3. SETUP THE INTERPOLATOR FOR WORKER PROCESSES
-    print("\nStep 3: Setting up the interpolator function...")
-    setup_interpolator(points, values)
-    print("Interpolator data set globally for worker processes.")
+    # 3. CREATE THE PARTIAL FUNCTION FOR THE OPTIMIZER
+    print("\nStep 3: Creating a partial function for worker processes...")
+    # This 'bakes' the points and values arrays into the worker_interpolator function.
+    # The resulting 'objective_function' only needs the arguments e, theta_e, and phi.
+    objective_function = partial(worker_interpolator, points, values)
+    print("Partial function created successfully.")
 
     # 4. RUN THE OPTIMIZER
     print("\nStep 4: Running Nelder-Mead optimizer with multiprocessing...")
     initial_e = 0.55
     initial_theta_e = 195
-    initial_phi = 260
+    initial_phi = 35
 
     start_time = time.time()
     
-    # Use a context manager to handle the pool of processes
     with mp.Pool(processes=mp.cpu_count()) as pool:
         e_min, theta_e_min, phi_min, chi2_min, history = nelder_mead_glafic_with_history(
-            pool, # Pass the pool to the optimizer
-            chi2_interpolator_with_bounds,
+            pool,
+            objective_function, # Pass the newly created partial function
             initial_e,
             initial_theta_e,
             initial_phi,
